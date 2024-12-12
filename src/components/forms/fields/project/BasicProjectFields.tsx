@@ -4,10 +4,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Control } from "react-hook-form";
-import { ProjectFormValues } from "../../projectFormSchema";
+import { ProjectFormData } from "../../projectFormSchema";
 
 interface BasicProjectFieldsProps {
-  control: Control<ProjectFormValues>;
+  control: Control<ProjectFormData>;
 }
 
 const PROJECT_TYPES = [
@@ -69,7 +69,7 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel>Project Type</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Select project type" />
@@ -102,123 +102,113 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
         )}
       />
 
-      <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={control}
-          name="start_date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Start Date</FormLabel>
+      <FormField
+        control={control}
+        name="start_date"
+        render={({ field }) => (
+          <FormItem className="flex flex-col">
+            <FormLabel>Start Date</FormLabel>
+            <DatePicker
+              date={field.value ? new Date(field.value) : undefined}
+              setDate={(date) => field.onChange(date?.toISOString())}
+            />
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="end_date"
+        render={({ field }) => (
+          <FormItem className="flex flex-col">
+            <FormLabel>End Date</FormLabel>
+            <DatePicker
+              date={field.value ? new Date(field.value) : undefined}
+              setDate={(date) => field.onChange(date?.toISOString())}
+            />
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="status"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Status</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
-                <DatePicker
-                  value={field.value ? new Date(field.value) : undefined}
-                  onChange={(date) => field.onChange(date?.toISOString())}
-                />
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+              <SelectContent>
+                {PROJECT_STATUS.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {status}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-        <FormField
-          control={control}
-          name="end_date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>End Date</FormLabel>
+      <FormField
+        control={control}
+        name="priority"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Priority</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
-                <DatePicker
-                  value={field.value ? new Date(field.value) : undefined}
-                  onChange={(date) => field.onChange(date?.toISOString())}
-                />
+                <SelectTrigger>
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+              <SelectContent>
+                {PROJECT_PRIORITY.map((priority) => (
+                  <SelectItem key={priority} value={priority}>
+                    {priority}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-      <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={control}
-          name="status"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {PROJECT_STATUS.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <FormField
+        control={control}
+        name="estimated_budget"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Estimated Budget</FormLabel>
+            <FormControl>
+              <Input type="number" placeholder="Enter estimated budget" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-        <FormField
-          control={control}
-          name="priority"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Priority</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {PROJECT_PRIORITY.map((priority) => (
-                    <SelectItem key={priority} value={priority}>
-                      {priority}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={control}
-          name="estimated_budget"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Estimated Budget</FormLabel>
-              <FormControl>
-                <Input type="number" placeholder="Enter estimated budget" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="actual_budget"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Actual Budget</FormLabel>
-              <FormControl>
-                <Input type="number" placeholder="Enter actual budget" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+      <FormField
+        control={control}
+        name="actual_budget"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Actual Budget</FormLabel>
+            <FormControl>
+              <Input type="number" placeholder="Enter actual budget" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
       <FormField
         control={control}
@@ -227,13 +217,13 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
           <FormItem>
             <FormLabel>Completion Percentage</FormLabel>
             <FormControl>
-              <Input
-                type="number"
+              <Input 
+                type="number" 
+                placeholder="Enter completion percentage" 
                 min="0"
                 max="100"
-                placeholder="Enter completion percentage"
                 {...field}
-                onChange={e => field.onChange(Number(e.target.value))}
+                onChange={(e) => field.onChange(parseInt(e.target.value))}
               />
             </FormControl>
             <FormMessage />

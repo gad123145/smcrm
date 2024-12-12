@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { projectFormSchema } from "./projectFormSchema";
 import { cn } from "@/lib/utils";
-import { BasicFields } from "./fields/project/BasicFields";
+import { BasicProjectFields } from "./fields/project/BasicProjectFields";
 import { ProjectFileUpload } from "./fields/upload/ProjectFileUpload";
 import type { ProjectFormData } from "./projectFormSchema";
 
@@ -55,7 +55,7 @@ export function ProjectForm({ onSubmit, onCancel, defaultValues, isCompanyProjec
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         <div className={cn("space-y-6", isRTL && "text-right")}>
-          <BasicFields form={form} isCompanyProject={isCompanyProject} />
+          <BasicProjectFields control={form.control} />
           <ProjectFileUpload 
             onUploadComplete={handleFileUploadComplete}
             isRTL={isRTL}
