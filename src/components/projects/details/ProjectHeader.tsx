@@ -1,33 +1,68 @@
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+import { Share2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Project } from "@/types/project";
-import { ProjectActions } from "./ProjectActions";
+import { ProjectShareDialog } from "./ProjectShareDialog";
+import { useState } from "react";
+import type { Project } from "@/types/project";
 
 interface ProjectHeaderProps {
   project: Project;
-  isRTL: boolean;
-  onDelete: () => void;
-  onUpdate: (data: any) => void;
+  onDelete: () => Promise<void>;
+  isRTL?: boolean;
 }
 
-export function ProjectHeader({ project, isRTL, onDelete, onUpdate }: ProjectHeaderProps) {
+export function ProjectHeader({ project, onDelete, isRTL = false }: ProjectHeaderProps) {
+  const { t } = useTranslation();
+  const [isShareOpen, setIsShareOpen] = useState(false);
+
   return (
-    <div className={cn(
-      "flex items-center",
-      isRTL ? "flex-row-reverse" : "",
-      "justify-between"
-    )}>
-      <h1 className={cn(
-        "text-3xl font-bold",
-        isRTL ? "text-right" : ""
+    <>
+      <div className={cn(
+        "flex items-center justify-between mb-6",
+        isRTL ? "flex-row-reverse" : "flex-row"
       )}>
-        {project?.name}
-      </h1>
-      <ProjectActions 
+        <h1 className={cn(
+          "text-3xl font-bold",
+          isRTL && "font-cairo"
+        )}>
+          {project.name}
+        </h1>
+        <div className={cn(
+          "flex items-center gap-2",
+          isRTL && "flex-row-reverse"
+        )}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setIsShareOpen(true)}
+            className={cn(
+              "text-primary hover:text-primary",
+              isRTL && "ml-2"
+            )}
+          >
+            <Share2 className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="destructive"
+            size="icon"
+            onClick={onDelete}
+            className={cn(
+              "text-destructive-foreground",
+              isRTL && "mr-2"
+            )}
+          >
+            <Trash2 className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+
+      <ProjectShareDialog
         project={project}
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
         isRTL={isRTL}
-        onDelete={onDelete}
-        onUpdate={onUpdate}
       />
-    </div>
+    </>
   );
 }

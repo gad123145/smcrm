@@ -6,6 +6,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Control } from "react-hook-form";
 import { ProjectFormData } from "../../projectFormSchema";
 import { useTranslation } from "react-i18next";
+import cn from "classnames";
 
 interface BasicProjectFieldsProps {
   control: Control<ProjectFormData>;
@@ -34,7 +35,8 @@ const PROJECT_PRIORITY = [
 ];
 
 export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
 
   return (
     <div className="space-y-4 rtl:space-x-reverse">
@@ -43,9 +45,15 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t('projects.fields.name')}</FormLabel>
+            <FormLabel className={cn(isRTL && "font-cairo")}>
+              {isRTL ? "اسم المشروع" : "Project Name"}
+            </FormLabel>
             <FormControl>
-              <Input placeholder={t('projects.placeholders.name')} {...field} className="font-normal" />
+              <Input 
+                placeholder={isRTL ? "أدخل اسم المشروع" : "Enter project name"} 
+                {...field} 
+                className={cn("font-normal", isRTL && "text-right font-cairo")} 
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -57,9 +65,15 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t('projects.fields.description')}</FormLabel>
+            <FormLabel className={cn(isRTL && "font-cairo")}>
+              {isRTL ? "وصف المشروع" : "Project Description"}
+            </FormLabel>
             <FormControl>
-              <Textarea placeholder={t('projects.placeholders.description')} {...field} className="font-normal min-h-[100px]" />
+              <Textarea 
+                placeholder={isRTL ? "أدخل وصف المشروع" : "Enter project description"} 
+                {...field} 
+                className={cn("font-normal min-h-[100px]", isRTL && "text-right font-cairo")} 
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -68,22 +82,24 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
 
       <FormField
         control={control}
-        name="project_type"
+        name="type"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t('projects.fields.type')}</FormLabel>
+            <FormLabel className={cn(isRTL && "font-cairo")}>
+              {isRTL ? "نوع المشروع" : "Project Type"}
+            </FormLabel>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
-                <SelectTrigger className="font-normal">
-                  <SelectValue placeholder={t('projects.placeholders.type')} />
+                <SelectTrigger className={cn("font-normal", isRTL && "text-right font-cairo")}>
+                  <SelectValue placeholder={isRTL ? "اختر نوع المشروع" : "Select project type"} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {PROJECT_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {t(`projects.types.${type}`)}
-                  </SelectItem>
-                ))}
+                <SelectItem value="residential">{isRTL ? "سكني" : "Residential"}</SelectItem>
+                <SelectItem value="commercial">{isRTL ? "تجاري" : "Commercial"}</SelectItem>
+                <SelectItem value="industrial">{isRTL ? "صناعي" : "Industrial"}</SelectItem>
+                <SelectItem value="infrastructure">{isRTL ? "بنية تحتية" : "Infrastructure"}</SelectItem>
+                <SelectItem value="other">{isRTL ? "أخرى" : "Other"}</SelectItem>
               </SelectContent>
             </Select>
             <FormMessage />
@@ -93,147 +109,153 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
 
       <FormField
         control={control}
-        name="project_manager"
+        name="manager"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t('projects.fields.manager')}</FormLabel>
+            <FormLabel className={cn(isRTL && "font-cairo")}>
+              {isRTL ? "مدير المشروع" : "Project Manager"}
+            </FormLabel>
             <FormControl>
-              <Input placeholder={t('projects.placeholders.manager')} {...field} className="font-normal" />
+              <Input 
+                placeholder={isRTL ? "أدخل اسم مدير المشروع" : "Enter project manager name"} 
+                {...field} 
+                className={cn("font-normal", isRTL && "text-right font-cairo")} 
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={control}
-          name="start_date"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>{t('projects.fields.startDate')}</FormLabel>
+      <FormField
+        control={control}
+        name="start_date"
+        render={({ field }) => (
+          <FormItem className="flex flex-col">
+            <FormLabel className={cn(isRTL && "font-cairo")}>
+              {isRTL ? "تاريخ البدء" : "Start Date"}
+            </FormLabel>
+            <FormControl>
               <DatePicker
-                date={field.value ? new Date(field.value) : undefined}
-                setDate={(date) => field.onChange(date?.toISOString())}
+                value={field.value ? new Date(field.value) : undefined}
+                onChange={(date) => field.onChange(date?.toISOString())}
               />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="end_date"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>{t('projects.fields.endDate')}</FormLabel>
-              <DatePicker
-                date={field.value ? new Date(field.value) : undefined}
-                setDate={(date) => field.onChange(date?.toISOString())}
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={control}
-          name="status"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('projects.fields.status')}</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger className="font-normal">
-                    <SelectValue placeholder={t('projects.placeholders.status')} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {PROJECT_STATUS.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {t(`projects.status.${status}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="priority"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('projects.fields.priority')}</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger className="font-normal">
-                    <SelectValue placeholder={t('projects.placeholders.priority')} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {PROJECT_PRIORITY.map((priority) => (
-                    <SelectItem key={priority} value={priority}>
-                      {t(`projects.priority.${priority}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={control}
-          name="estimated_budget"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('projects.fields.estimatedBudget')}</FormLabel>
-              <FormControl>
-                <Input type="number" placeholder={t('projects.placeholders.estimatedBudget')} {...field} className="font-normal" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="actual_budget"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('projects.fields.actualBudget')}</FormLabel>
-              <FormControl>
-                <Input type="number" placeholder={t('projects.placeholders.actualBudget')} {...field} className="font-normal" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
       <FormField
         control={control}
-        name="completion_percentage"
+        name="status"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t('projects.fields.completionPercentage')}</FormLabel>
+            <FormLabel className={cn(isRTL && "font-cairo")}>
+              {isRTL ? "حالة المشروع" : "Project Status"}
+            </FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger className={cn("font-normal", isRTL && "text-right font-cairo")}>
+                  <SelectValue placeholder={isRTL ? "اختر حالة المشروع" : "Select project status"} />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="active">{isRTL ? "نشط" : "Active"}</SelectItem>
+                <SelectItem value="on-hold">{isRTL ? "معلق" : "On Hold"}</SelectItem>
+                <SelectItem value="completed">{isRTL ? "مكتمل" : "Completed"}</SelectItem>
+                <SelectItem value="cancelled">{isRTL ? "ملغي" : "Cancelled"}</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="priority"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className={cn(isRTL && "font-cairo")}>
+              {isRTL ? "أولوية المشروع" : "Project Priority"}
+            </FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger className={cn("font-normal", isRTL && "text-right font-cairo")}>
+                  <SelectValue placeholder={isRTL ? "اختر أولوية المشروع" : "Select project priority"} />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="low">{isRTL ? "منخفضة" : "Low"}</SelectItem>
+                <SelectItem value="medium">{isRTL ? "متوسطة" : "Medium"}</SelectItem>
+                <SelectItem value="high">{isRTL ? "عالية" : "High"}</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="budget"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className={cn(isRTL && "font-cairo")}>
+              {isRTL ? "الميزانية المقدرة" : "Estimated Budget"}
+            </FormLabel>
             <FormControl>
               <Input 
                 type="number" 
-                placeholder={t('projects.placeholders.completionPercentage')} 
-                min="0"
-                max="100"
-                {...field}
-                onChange={(e) => field.onChange(parseInt(e.target.value))}
-                className="font-normal"
+                placeholder={isRTL ? "أدخل الميزانية المقدرة" : "Enter estimated budget"} 
+                {...field} 
+                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                className={cn("font-normal", isRTL && "text-right font-cairo")} 
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="price"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className={cn(isRTL && "font-cairo")}>
+              {isRTL ? "السعر" : "Price"}
+            </FormLabel>
+            <FormControl>
+              <Input 
+                type="number" 
+                placeholder={isRTL ? "أدخل السعر" : "Enter price"} 
+                {...field} 
+                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                className={cn("font-normal", isRTL && "text-right font-cairo")} 
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="project_area"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className={cn(isRTL && "font-cairo")}>
+              {isRTL ? "مساحة المشروع" : "Project Area"}
+            </FormLabel>
+            <FormControl>
+              <Input 
+                type="number" 
+                placeholder={isRTL ? "أدخل مساحة المشروع" : "Enter project area"} 
+                {...field} 
+                onChange={e => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                className={cn("font-normal", isRTL && "text-right font-cairo")} 
               />
             </FormControl>
             <FormMessage />

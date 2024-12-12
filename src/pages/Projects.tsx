@@ -4,7 +4,7 @@ import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { DashboardSidebar } from "@/components/layouts/DashboardSidebar";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { PropertyCard } from "@/components/properties/PropertyCard";
+import { ProjectCard } from "@/components/projects/ProjectCard";
 import { cn } from "@/lib/utils";
 import { useProjects } from "@/hooks/useProjects";
 import { useProjectMutations } from "@/hooks/useProjectMutations";
@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
+import { ShareButton } from "@/components/projects/ShareButton";
 
 const Projects = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -84,36 +85,46 @@ const Projects = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {projects.map((project: Project) => (
-                  <PropertyCard
+                  <div
                     key={project.id}
-                    property={{
-                      id: project.id,
-                      title: project.name,
-                      description: project.description || "",
-                      types: ["residential"],
-                      pricePerMeterFrom: project.price?.split(" - ")[0] || "",
-                      pricePerMeterTo: project.price?.split(" - ")[1] || "",
-                      operatingCompany: project.operating_company || "",
-                      location: project.location || "",
-                      deliveryDate: project.start_date || "",
-                      files: [],
-                      address: project.location || "",
-                    }}
-                    onEdit={async (data) => {
-                      const updatedProject: Project = {
-                        ...project,
-                        name: data.title,
-                        description: data.description,
-                        price: `${data.pricePerMeterFrom} - ${data.pricePerMeterTo}`,
-                        location: data.location || "",
-                        operating_company: data.operatingCompany,
-                      };
-                      await updateProject.mutateAsync(updatedProject);
-                    }}
-                    onDelete={async () => {
-                      await handleProjectDelete(project);
-                    }}
-                  />
+                    className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4"
+                  >
+                    <div className={cn(
+                      "flex items-center justify-between mb-4",
+                      isRTL && "flex-row-reverse"
+                    )}>
+                      <h2 className="text-xl font-semibold">{project.name}</h2>
+                      <ShareButton project={project} isRTL={isRTL} />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-sm text-gray-500">{t("projects.form.location")}</p>
+                        <p>{project.location || "-"}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">{t("projects.form.price")}</p>
+                        <p>{project.price || "-"}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">{t("projects.form.operatingCompany")}</p>
+                        <p>{project.operating_company || "-"}</p>
+                      </div>
+                    </div>
+
+                    <div className={cn(
+                      "flex items-center gap-2 mt-4",
+                      isRTL && "flex-row-reverse"
+                    )}>
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => navigate(`/projects/${project.id}`)}
+                      >
+                        {t("common.viewDetails")}
+                      </Button>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

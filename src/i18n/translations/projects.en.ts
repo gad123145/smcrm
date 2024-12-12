@@ -1,6 +1,6 @@
 export const projectsTranslations = {
   title: "Projects",
-  addProject: "Add Project",
+  addProject: "Add New Project",
   editProject: "Edit Project",
   fields: {
     name: "Project Name",
@@ -10,12 +10,37 @@ export const projectsTranslations = {
     startDate: "Start Date",
     endDate: "End Date",
     status: "Project Status",
-    priority: "Priority",
+    priority: "Project Priority",
     estimatedBudget: "Estimated Budget",
-    actualBudget: "Actual Budget",
-    completionPercentage: "Completion Percentage",
     price: "Price",
-    projectArea: "Project Area"
+    projectArea: "Project Area",
+    location: "Location",
+    operatingCompany: "Operating Company",
+    availableUnits: "Available Units",
+    deliveryDate: "Delivery Date"
+  },
+  form: {
+    title: "Project Details",
+    name: "Project Name",
+    description: "Project Description",
+    type: "Project Type",
+    manager: "Project Manager",
+    startDate: "Start Date",
+    status: "Project Status",
+    priority: "Project Priority",
+    estimatedBudget: "Estimated Budget",
+    price: "Price",
+    projectArea: "Project Area",
+    location: "Location",
+    operatingCompany: "Operating Company",
+    deliveryDate: "Delivery Date",
+    documents: "Documents",
+    images: "Images",
+    addImage: "Add Image",
+    uploadImages: "Upload Images",
+    dragAndDrop: "Drag and drop images here",
+    or: "or",
+    browseFiles: "Browse Files"
   },
   placeholders: {
     name: "Enter project name",
@@ -23,24 +48,24 @@ export const projectsTranslations = {
     type: "Select project type",
     manager: "Select project manager",
     status: "Select project status",
-    priority: "Select priority",
+    priority: "Select project priority",
     estimatedBudget: "Enter estimated budget",
-    actualBudget: "Enter actual budget",
-    completionPercentage: "Enter completion percentage"
+    price: "Enter price",
+    projectArea: "Enter project area",
+    location: "Enter location",
+    deliveryDate: "Select delivery date"
   },
   types: {
     residential: "Residential",
     commercial: "Commercial",
-    medical: "Medical",
-    hotel: "Hotel",
-    administrative: "Administrative",
-    mixed: "Mixed Use"
+    industrial: "Industrial",
+    infrastructure: "Infrastructure",
+    other: "Other"
   },
   status: {
-    planned: "Planned",
-    inProgress: "In Progress",
+    active: "Active",
+    "on-hold": "On Hold",
     completed: "Completed",
-    onHold: "On Hold",
     cancelled: "Cancelled"
   },
   priority: {
@@ -50,8 +75,9 @@ export const projectsTranslations = {
     urgent: "Urgent"
   },
   messages: {
-    success: "Project saved successfully",
+    addSuccess: "Project added successfully",
+    updateSuccess: "Project updated successfully",
     deleteSuccess: "Project deleted successfully",
-    error: "Error saving project"
+    error: "An error occurred"
   }
 } as const;

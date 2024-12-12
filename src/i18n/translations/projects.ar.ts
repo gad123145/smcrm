@@ -1,6 +1,6 @@
 export const projectsTranslations = {
   title: "المشاريع",
-  addProject: "إضافة مشروع",
+  addProject: "إضافة مشروع جديد",
   editProject: "تعديل المشروع",
   fields: {
     name: "اسم المشروع",
@@ -10,12 +10,37 @@ export const projectsTranslations = {
     startDate: "تاريخ البدء",
     endDate: "تاريخ الانتهاء",
     status: "حالة المشروع",
-    priority: "الأولوية",
+    priority: "أولوية المشروع",
     estimatedBudget: "الميزانية المتوقعة",
-    actualBudget: "الميزانية الفعلية",
-    completionPercentage: "نسبة الإنجاز",
     price: "السعر",
-    projectArea: "مساحة المشروع"
+    projectArea: "مساحة المشروع",
+    location: "الموقع",
+    operatingCompany: "الشركة المشغلة",
+    availableUnits: "الوحدات المتاحة",
+    deliveryDate: "تاريخ التسليم"
+  },
+  form: {
+    title: "تفاصيل المشروع",
+    name: "اسم المشروع",
+    description: "وصف المشروع",
+    type: "نوع المشروع",
+    manager: "مدير المشروع",
+    startDate: "تاريخ البدء",
+    status: "حالة المشروع",
+    priority: "أولوية المشروع",
+    estimatedBudget: "الميزانية المتوقعة",
+    price: "السعر",
+    projectArea: "مساحة المشروع",
+    location: "الموقع",
+    operatingCompany: "الشركة المشغلة",
+    deliveryDate: "تاريخ التسليم",
+    documents: "المستندات",
+    images: "الصور",
+    addImage: "إضافة صورة",
+    uploadImages: "رفع الصور",
+    dragAndDrop: "اسحب وأفلت الصور هنا",
+    or: "أو",
+    browseFiles: "تصفح الملفات"
   },
   placeholders: {
     name: "أدخل اسم المشروع",
@@ -25,33 +50,34 @@ export const projectsTranslations = {
     status: "اختر حالة المشروع",
     priority: "اختر أولوية المشروع",
     estimatedBudget: "أدخل الميزانية المتوقعة",
-    actualBudget: "أدخل الميزانية الفعلية",
-    completionPercentage: "أدخل نسبة الإنجاز"
-  },
-  types: {
-    residential: "سكني",
-    commercial: "تجاري",
-    medical: "طبي",
-    hotel: "فندقي",
-    administrative: "إداري",
-    mixed: "متعدد الاستخدامات"
+    price: "أدخل السعر",
+    projectArea: "أدخل مساحة المشروع",
+    location: "أدخل الموقع",
+    deliveryDate: "اختر تاريخ التسليم"
   },
   status: {
-    planned: "مخطط",
-    inProgress: "قيد التنفيذ",
+    active: "نشط",
+    "on-hold": "معلق",
     completed: "مكتمل",
-    onHold: "متوقف",
     cancelled: "ملغي"
   },
   priority: {
     low: "منخفضة",
     medium: "متوسطة",
     high: "عالية",
-    urgent: "عاجل"
+    urgent: "عاجلة"
+  },
+  type: {
+    residential: "سكني",
+    commercial: "تجاري",
+    industrial: "صناعي",
+    infrastructure: "بنية تحتية",
+    other: "أخرى"
   },
   messages: {
-    success: "تم حفظ المشروع بنجاح",
+    addSuccess: "تم إضافة المشروع بنجاح",
+    updateSuccess: "تم تحديث المشروع بنجاح",
     deleteSuccess: "تم حذف المشروع بنجاح",
-    error: "حدث خطأ أثناء حفظ المشروع"
+    error: "حدث خطأ"
   }
 } as const;

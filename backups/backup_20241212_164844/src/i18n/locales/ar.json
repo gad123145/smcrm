@@ -1,0 +1,47 @@
+{
+  "project": {
+    "fields": {
+      "name": "اسم المشروع",
+      "description": "وصف المشروع",
+      "type": "نوع المشروع",
+      "manager": "مدير المشروع",
+      "startDate": "تاريخ البدء",
+      "endDate": "تاريخ الانتهاء",
+      "status": "الحالة",
+      "priority": "الأولوية",
+      "estimatedBudget": "الميزانية المتوقعة",
+      "actualBudget": "الميزانية الفعلية",
+      "completionPercentage": "نسبة الإنجاز"
+    },
+    "placeholders": {
+      "name": "أدخل اسم المشروع",
+      "description": "أدخل وصف المشروع",
+      "type": "اختر نوع المشروع",
+      "manager": "أدخل اسم مدير المشروع",
+      "status": "اختر الحالة",
+      "priority": "اختر الأولوية",
+      "estimatedBudget": "أدخل الميزانية المتوقعة",
+      "actualBudget": "أدخل الميزانية الفعلية",
+      "completionPercentage": "أدخل نسبة الإنجاز"
+    },
+    "types": {
+      "residential": "سكني",
+      "commercial": "تجاري",
+      "industrial": "صناعي",
+      "infrastructure": "بنية تحتية",
+      "other": "أخرى"
+    },
+    "status": {
+      "active": "نشط",
+      "on-hold": "معلق",
+      "completed": "مكتمل",
+      "cancelled": "ملغي"
+    },
+    "priority": {
+      "low": "منخفضة",
+      "medium": "متوسطة",
+      "high": "عالية",
+      "urgent": "عاجلة"
+    }
+  }
+}

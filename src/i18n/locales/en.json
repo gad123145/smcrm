@@ -1,0 +1,83 @@
+{
+  "projects": {
+    "addProject": "Add Project",
+    "title": "Projects",
+    "loadError": "Error loading projects",
+    "noProjects": "No projects yet",
+    "deleteConfirmation": "Are you sure you want to delete this project?",
+    "deleteSuccess": "Project deleted successfully",
+    "deleteError": "Error deleting project"
+  },
+  "project": {
+    "fields": {
+      "name": "Project Name",
+      "description": "Description",
+      "type": "Type",
+      "manager": "Project Manager",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "status": "Status",
+      "priority": "Priority",
+      "estimatedBudget": "Estimated Budget",
+      "actualBudget": "Actual Budget",
+      "completionPercentage": "Completion Percentage",
+      "price": "Price",
+      "projectArea": "Project Area"
+    },
+    "types": {
+      "residential": "Residential",
+      "commercial": "Commercial",
+      "industrial": "Industrial",
+      "infrastructure": "Infrastructure",
+      "other": "Other"
+    },
+    "status": {
+      "active": "Active",
+      "on-hold": "On Hold",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    }
+  },
+  "properties": {
+    "form": {
+      "area": "Area",
+      "location": "Location",
+      "title": "Add New Property",
+      "propertyType": "Property Type",
+      "price": "Price",
+      "description": "Description",
+      "features": "Features",
+      "bedrooms": "Bedrooms",
+      "bathrooms": "Bathrooms",
+      "parkingSpaces": "Parking Spaces",
+      "yearBuilt": "Year Built",
+      "status": "Status",
+      "submit": "Save Property"
+    },
+    "types": {
+      "apartment": "Apartment",
+      "villa": "Villa",
+      "office": "Office",
+      "land": "Land",
+      "building": "Building",
+      "warehouse": "Warehouse"
+    },
+    "status": {
+      "available": "Available",
+      "sold": "Sold",
+      "rented": "Rented",
+      "underConstruction": "Under Construction"
+    }
+  },
+  "actions": {
+    "view": "View",
+    "edit": "Edit",
+    "delete": "Delete"
+  }
+}

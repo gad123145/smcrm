@@ -15,6 +15,9 @@ import { ProjectHeader } from "@/components/projects/details/ProjectHeader";
 import type { Project } from "@/types/project";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { Share2 } from "lucide-react";
+import { ProjectShareDialog } from "@/components/projects/details/ProjectShareDialog";
+import { ShareButton } from "@/components/projects/ShareButton";
 
 export default function ProjectDetails() {
   const { id } = useParams();
@@ -23,6 +26,7 @@ export default function ProjectDetails() {
   const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const { updateProject } = useProjectMutations();
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const { data: project, isLoading } = useQuery({
     queryKey: ['project', id],
@@ -200,23 +204,51 @@ export default function ProjectDetails() {
           isRTL ? "font-cairo" : ""
         )}>
           <div className="bg-white dark:bg-gray-800 min-h-full p-8 space-y-8">
-            <div className="flex justify-between items-center">
-              <ProjectHeader 
-                project={project}
-                isRTL={isRTL}
-                onDelete={handleDeleteProject}
-                onUpdate={handleSubmit}
-              />
-            </div>
-
-            {/* Images Carousel */}
-            {project && <ProjectImages images={project.images} isRTL={isRTL} />}
-
-            {/* Project Info */}
-            {project && <ProjectInfo project={project} isRTL={isRTL} />}
+            {project && (
+              <div className="space-y-6">
+                <div className={cn(
+                  "flex items-center justify-between",
+                  isRTL && "flex-row-reverse"
+                )}>
+                  <h1 className={cn(
+                    "text-3xl font-bold",
+                    isRTL && "font-cairo"
+                  )}>
+                    {project.name}
+                  </h1>
+                  <div className={cn(
+                    "flex items-center gap-2",
+                    isRTL && "flex-row-reverse"
+                  )}>
+                    <ShareButton project={project} isRTL={isRTL} />
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteProject}
+                      className={cn(
+                        "flex items-center gap-2",
+                        isRTL && "flex-row-reverse"
+                      )}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>{isRTL ? "حذف" : "Delete"}</span>
+                    </Button>
+                  </div>
+                </div>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <ProjectInfo project={project} isRTL={isRTL} />
+                  <ProjectImages project={project} isRTL={isRTL} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </DashboardContent>
+      <ProjectShareDialog
+        project={project}
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        isRTL={isRTL}
+      />
     </DashboardLayout>
   );
 }

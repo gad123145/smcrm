@@ -1,19 +1,23 @@
-import { useState } from "react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Share2, Trash } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { PropertyForm } from "@/components/forms/PropertyForm";
-import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
-import { ProjectShareDialog } from "@/components/projects/share/ProjectShareDialog";
-import { toast } from "sonner";
-import type { Project } from "@/types/project";
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { MoreHorizontal, Pencil, Share2, Trash } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { PropertyForm } from '@/components/forms/PropertyForm';
+import { cn } from '@/lib/utils';
+import { ProjectShareDialog } from './ProjectShareDialog';
 
 interface ProjectActionsProps {
-  project: Project;
-  onDelete: () => void;
-  onUpdate: (data: any) => void;
+  project: any;
+  onDelete: () => Promise<void>;
+  onUpdate: (data: any) => Promise<void>;
   isRTL?: boolean;
 }
 
@@ -46,7 +50,22 @@ export function ProjectActions({ project, onDelete, onUpdate, isRTL = false }: P
   };
 
   return (
-    <>
+    <div className={cn(
+      "flex items-center gap-2",
+      isRTL && "flex-row-reverse"
+    )}>
+      <Button
+        variant="outline"
+        onClick={() => setIsShareOpen(true)}
+        className={cn(
+          "flex items-center gap-2",
+          isRTL && "flex-row-reverse"
+        )}
+      >
+        <Share2 className="h-4 w-4" />
+        <span>{t("projects.share.title")}</span>
+      </Button>
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -61,13 +80,6 @@ export function ProjectActions({ project, onDelete, onUpdate, isRTL = false }: P
           >
             <Pencil className="h-4 w-4" />
             {t("projects.editProject")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className={cn("gap-2", isRTL && "flex-row-reverse")}
-            onClick={() => setIsShareOpen(true)}
-          >
-            <Share2 className="h-4 w-4" />
-            {t("projects.share.title")}
           </DropdownMenuItem>
           <DropdownMenuItem
             className={cn("gap-2 text-destructive", isRTL && "flex-row-reverse")}
@@ -95,18 +107,10 @@ export function ProjectActions({ project, onDelete, onUpdate, isRTL = false }: P
             </SheetTitle>
           </SheetHeader>
           <div className="mt-6">
-            <PropertyForm
+            <PropertyForm 
+              defaultValues={project}
               onSubmit={onUpdate}
-              onCancel={() => setIsEditOpen(false)}
-              defaultValues={{
-                title: project.name,
-                description: project.description || "",
-                location: project.location || "",
-                operatingCompany: project.operating_company || "",
-                area: project.project_area || "",
-                price: project.price || "",
-                images: project.images || [],
-              }}
+              isRTL={isRTL}
             />
           </div>
         </SheetContent>
@@ -118,6 +122,6 @@ export function ProjectActions({ project, onDelete, onUpdate, isRTL = false }: P
         onClose={() => setIsShareOpen(false)}
         isRTL={isRTL}
       />
-    </>
+    </div>
   );
 }

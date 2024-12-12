@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { formSchema } from "../formSchema";
+import { useTranslation } from 'react-i18next';
+import cn from 'classnames';
 
 type ProjectFieldsProps = {
   form: UseFormReturn<z.infer<typeof formSchema>>;
@@ -12,6 +14,9 @@ type ProjectFieldsProps = {
 };
 
 export function ProjectFields({ form, projects }: ProjectFieldsProps) {
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
+
   return (
     <>
       <FormField
@@ -19,26 +24,28 @@ export function ProjectFields({ form, projects }: ProjectFieldsProps) {
         name="status"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>الحالة</FormLabel>
+            <FormLabel className={cn(isRTL && "font-cairo")}>
+              {isRTL ? "الحالة" : "Status"}
+            </FormLabel>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر الحالة" />
+                <SelectTrigger className={cn("font-normal", isRTL && "text-right font-cairo")}>
+                  <SelectValue placeholder={isRTL ? "اختر الحالة" : "Select status"} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="new">عملاء جدد</SelectItem>
-                <SelectItem value="potential">عملاء محتملين</SelectItem>
-                <SelectItem value="interested">عملاء مهتمين</SelectItem>
-                <SelectItem value="responded">عملاء متجاوبين</SelectItem>
-                <SelectItem value="noResponse">لا يوجد رد</SelectItem>
-                <SelectItem value="scheduled">موعد محدد</SelectItem>
-                <SelectItem value="postMeeting">بعد الاجتماع</SelectItem>
-                <SelectItem value="booked">تم الحجز</SelectItem>
-                <SelectItem value="cancelled">ملغي</SelectItem>
-                <SelectItem value="sold">تم البيع</SelectItem>
-                <SelectItem value="postponed">مؤجل</SelectItem>
-                <SelectItem value="resale">إعادة بيع</SelectItem>
+                <SelectItem value="new">{isRTL ? "جديد" : "New"}</SelectItem>
+                <SelectItem value="potential">{isRTL ? "محتمل" : "Potential"}</SelectItem>
+                <SelectItem value="interested">{isRTL ? "مهتم" : "Interested"}</SelectItem>
+                <SelectItem value="responded">{isRTL ? "متجاوب" : "Responded"}</SelectItem>
+                <SelectItem value="noResponse">{isRTL ? "لا يوجد رد" : "No Response"}</SelectItem>
+                <SelectItem value="scheduled">{isRTL ? "موعد محدد" : "Scheduled"}</SelectItem>
+                <SelectItem value="postMeeting">{isRTL ? "بعد الاجتماع" : "Post Meeting"}</SelectItem>
+                <SelectItem value="booked">{isRTL ? "تم الحجز" : "Booked"}</SelectItem>
+                <SelectItem value="cancelled">{isRTL ? "ملغي" : "Cancelled"}</SelectItem>
+                <SelectItem value="sold">{isRTL ? "تم البيع" : "Sold"}</SelectItem>
+                <SelectItem value="postponed">{isRTL ? "مؤجل" : "Postponed"}</SelectItem>
+                <SelectItem value="resale">{isRTL ? "إعادة بيع" : "Resale"}</SelectItem>
               </SelectContent>
             </Select>
             <FormMessage />
@@ -52,11 +59,13 @@ export function ProjectFields({ form, projects }: ProjectFieldsProps) {
           name="project"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>المشروع</FormLabel>
+              <FormLabel className={cn(isRTL && "font-cairo")}>
+                {isRTL ? "المشروع" : "Project"}
+              </FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="اختر المشروع" />
+                  <SelectTrigger className={cn("font-normal", isRTL && "text-right font-cairo")}>
+                    <SelectValue placeholder={isRTL ? "اختر المشروع" : "Select project"} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -77,9 +86,16 @@ export function ProjectFields({ form, projects }: ProjectFieldsProps) {
           name="budget"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>الميزانية</FormLabel>
+              <FormLabel className={cn(isRTL && "font-cairo")}>
+                {isRTL ? "الميزانية" : "Budget"}
+              </FormLabel>
               <FormControl>
-                <Input type="number" placeholder="0" {...field} />
+                <Input 
+                  type="number" 
+                  placeholder={isRTL ? "أدخل الميزانية" : "Enter budget"} 
+                  {...field} 
+                  className={cn("font-normal", isRTL && "text-right font-cairo")} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -92,9 +108,15 @@ export function ProjectFields({ form, projects }: ProjectFieldsProps) {
         name="campaign"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>الحملة (اختياري)</FormLabel>
+            <FormLabel className={cn(isRTL && "font-cairo")}>
+              {isRTL ? "الحملة (اختياري)" : "Campaign (Optional)"}
+            </FormLabel>
             <FormControl>
-              <Input placeholder="اسم الحملة" {...field} />
+              <Input 
+                placeholder={isRTL ? "اسم الحملة" : "Campaign name"} 
+                {...field} 
+                className={cn("font-normal", isRTL && "text-right font-cairo")} 
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
