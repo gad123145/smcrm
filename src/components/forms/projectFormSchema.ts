@@ -16,16 +16,10 @@ export const projectFormSchema = z.object({
   dependencies: z.array(z.string()).default([]),
   milestones: z.array(z.any()).default([]),
   team_members: z.array(z.string()).default([]),
-  price: z.string().optional().nullable(),
-  location: z.string().optional().nullable(),
-  operating_company: z.string().optional().nullable(),
-  project_area: z.string().optional().nullable(),
-  project_division: z.string().optional().nullable(),
-  available_units: z.string().optional().nullable(),
-  floors_count: z.number().optional().nullable(),
-  images: z.array(z.string()).default([]),
-  video: z.string().optional().nullable(),
-  developer_id: z.string().optional().nullable(),
+  images: z.array(z.union([z.instanceof(File), z.string()])).default([]),
+  videos: z.array(z.union([z.instanceof(File), z.string()])).default([]),
+  files: z.array(z.union([z.instanceof(File), z.string()])).default([]),
+  user_id: z.string().optional(),
 });
 
-export type ProjectFormValues = z.infer<typeof projectFormSchema>;
+export type ProjectFormData = z.infer<typeof projectFormSchema>;
