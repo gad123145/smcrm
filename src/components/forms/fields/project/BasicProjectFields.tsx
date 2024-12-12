@@ -1,32 +1,48 @@
-import { UseFormReturn } from "react-hook-form";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { useTranslation } from "react-i18next";
-import type { ProjectFormData } from "../../projectFormSchema";
-import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Control } from "react-hook-form";
+import { ProjectFormValues } from "../../projectFormSchema";
 
 interface BasicProjectFieldsProps {
-  form: UseFormReturn<ProjectFormData>;
+  control: Control<ProjectFormValues>;
 }
 
-export function BasicProjectFields({ form }: BasicProjectFieldsProps) {
-  const { i18n } = useTranslation();
-  const isRTL = i18n.language === 'ar';
+const PROJECT_TYPES = [
+  "Residential",
+  "Commercial",
+  "Industrial",
+  "Infrastructure",
+  "Other"
+];
 
+const PROJECT_STATUS = [
+  "active",
+  "on-hold",
+  "completed",
+  "cancelled"
+];
+
+const PROJECT_PRIORITY = [
+  "low",
+  "medium",
+  "high",
+  "urgent"
+];
+
+export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
   return (
     <div className="space-y-4">
       <FormField
-        control={form.control}
+        control={control}
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className={cn(isRTL && "font-cairo")}>
-              {isRTL ? "اسم المشروع" : "Project Name"}
-            </FormLabel>
+            <FormLabel>Project Name</FormLabel>
             <FormControl>
-              <Input {...field} className={cn(isRTL && "text-right font-cairo")} />
+              <Input placeholder="Enter project name" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -34,75 +50,70 @@ export function BasicProjectFields({ form }: BasicProjectFieldsProps) {
       />
 
       <FormField
-        control={form.control}
+        control={control}
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className={cn(isRTL && "font-cairo")}>
-              {isRTL ? "تفاصيل المشروع" : "Project Details"}
-            </FormLabel>
+            <FormLabel>Description</FormLabel>
             <FormControl>
-              <Textarea {...field} className={cn("min-h-[100px]", isRTL && "text-right font-cairo")} />
+              <Textarea placeholder="Enter project description" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="project_type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className={cn(isRTL && "font-cairo")}>
-                {isRTL ? "نوع المشروع" : "Project Type"}
-              </FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={isRTL ? "اختر نوع المشروع" : "Select project type"} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="residential">{isRTL ? "سكني" : "Residential"}</SelectItem>
-                  <SelectItem value="commercial">{isRTL ? "تجاري" : "Commercial"}</SelectItem>
-                  <SelectItem value="mixed">{isRTL ? "متعدد الاستخدام" : "Mixed Use"}</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="project_manager"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className={cn(isRTL && "font-cairo")}>
-                {isRTL ? "مدير المشروع" : "Project Manager"}
-              </FormLabel>
+      <FormField
+        control={control}
+        name="project_type"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Project Type</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
               <FormControl>
-                <Input {...field} className={cn(isRTL && "text-right font-cairo")} />
+                <SelectTrigger>
+                  <SelectValue placeholder="Select project type" />
+                </SelectTrigger>
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+              <SelectContent>
+                {PROJECT_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <FormField
+        control={control}
+        name="project_manager"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Project Manager</FormLabel>
+            <FormControl>
+              <Input placeholder="Enter project manager name" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <div className="grid grid-cols-2 gap-4">
         <FormField
-          control={form.control}
+          control={control}
           name="start_date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className={cn(isRTL && "font-cairo")}>
-                {isRTL ? "تاريخ البدء" : "Start Date"}
-              </FormLabel>
+              <FormLabel>Start Date</FormLabel>
               <FormControl>
-                <Input type="date" {...field} className={cn(isRTL && "text-right font-cairo")} />
+                <DatePicker
+                  value={field.value ? new Date(field.value) : undefined}
+                  onChange={(date) => field.onChange(date?.toISOString())}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -110,107 +121,15 @@ export function BasicProjectFields({ form }: BasicProjectFieldsProps) {
         />
 
         <FormField
-          control={form.control}
+          control={control}
           name="end_date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className={cn(isRTL && "font-cairo")}>
-                {isRTL ? "تاريخ الانتهاء" : "End Date"}
-              </FormLabel>
+              <FormLabel>End Date</FormLabel>
               <FormControl>
-                <Input type="date" {...field} className={cn(isRTL && "text-right font-cairo")} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="priority"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className={cn(isRTL && "font-cairo")}>
-                {isRTL ? "الأولوية" : "Priority"}
-              </FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={isRTL ? "اختر الأولوية" : "Select priority"} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="high">{isRTL ? "عالية" : "High"}</SelectItem>
-                  <SelectItem value="medium">{isRTL ? "متوسطة" : "Medium"}</SelectItem>
-                  <SelectItem value="low">{isRTL ? "منخفضة" : "Low"}</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="status"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className={cn(isRTL && "font-cairo")}>
-                {isRTL ? "الحالة" : "Status"}
-              </FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={isRTL ? "اختر الحالة" : "Select status"} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="active">{isRTL ? "نشط" : "Active"}</SelectItem>
-                  <SelectItem value="on_hold">{isRTL ? "متوقف مؤقتاً" : "On Hold"}</SelectItem>
-                  <SelectItem value="completed">{isRTL ? "مكتمل" : "Completed"}</SelectItem>
-                  <SelectItem value="cancelled">{isRTL ? "ملغي" : "Cancelled"}</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="estimated_budget"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className={cn(isRTL && "font-cairo")}>
-                {isRTL ? "الميزانية المقدرة" : "Estimated Budget"}
-              </FormLabel>
-              <FormControl>
-                <Input type="number" {...field} className={cn(isRTL && "text-right font-cairo")} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="completion_percentage"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className={cn(isRTL && "font-cairo")}>
-                {isRTL ? "نسبة الإنجاز" : "Completion Percentage"}
-              </FormLabel>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  min="0"
-                  max="100"
-                  {...field} 
-                  className={cn(isRTL && "text-right font-cairo")} 
+                <DatePicker
+                  value={field.value ? new Date(field.value) : undefined}
+                  onChange={(date) => field.onChange(date?.toISOString())}
                 />
               </FormControl>
               <FormMessage />
@@ -218,6 +137,109 @@ export function BasicProjectFields({ form }: BasicProjectFieldsProps) {
           )}
         />
       </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {PROJECT_STATUS.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="priority"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Priority</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {PROJECT_PRIORITY.map((priority) => (
+                    <SelectItem key={priority} value={priority}>
+                      {priority}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={control}
+          name="estimated_budget"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Estimated Budget</FormLabel>
+              <FormControl>
+                <Input type="number" placeholder="Enter estimated budget" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="actual_budget"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Actual Budget</FormLabel>
+              <FormControl>
+                <Input type="number" placeholder="Enter actual budget" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <FormField
+        control={control}
+        name="completion_percentage"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Completion Percentage</FormLabel>
+            <FormControl>
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                placeholder="Enter completion percentage"
+                {...field}
+                onChange={e => field.onChange(Number(e.target.value))}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 }

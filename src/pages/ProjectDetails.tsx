@@ -29,13 +29,24 @@ export default function ProjectDetails() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('projects')
-        .select('*')
+        .select(`
+          *,
+          developer:developer_id (
+            id,
+            name
+          )
+        `)
         .eq('id', id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        toast.error(isRTL ? "حدث خطأ أثناء جلب بيانات المشروع" : "Error fetching project data");
+        throw error;
+      }
       return data as Project;
     },
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000, // تحديث كل 30 ثانية
   });
 
   const handleDeleteProject = async () => {

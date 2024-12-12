@@ -18,17 +18,17 @@ ADD COLUMN IF NOT EXISTS custom_fields JSONB DEFAULT '{}'::JSONB;
 
 -- Add comments to the new columns
 COMMENT ON COLUMN projects.project_type IS 'Type of the project (e.g., Development, Design, Marketing)';
-COMMENT ON COLUMN projects.project_manager IS 'Name of the project manager';
+COMMENT ON COLUMN projects.project_manager IS 'Person responsible for managing the project';
 COMMENT ON COLUMN projects.start_date IS 'Project start date';
 COMMENT ON COLUMN projects.end_date IS 'Project end date';
-COMMENT ON COLUMN projects.status IS 'Current project status';
+COMMENT ON COLUMN projects.status IS 'Current status of the project';
 COMMENT ON COLUMN projects.priority IS 'Project priority level';
 COMMENT ON COLUMN projects.estimated_budget IS 'Estimated project budget';
-COMMENT ON COLUMN projects.actual_budget IS 'Actual project budget';
+COMMENT ON COLUMN projects.actual_budget IS 'Actual spent budget';
 COMMENT ON COLUMN projects.completion_percentage IS 'Project completion percentage';
 COMMENT ON COLUMN projects.risks IS 'Array of project risks';
 COMMENT ON COLUMN projects.dependencies IS 'Array of project dependencies';
-COMMENT ON COLUMN projects.milestones IS 'Array of project milestones as JSONB';
+COMMENT ON COLUMN projects.milestones IS 'Array of project milestones with details';
 COMMENT ON COLUMN projects.team_members IS 'Array of team member UUIDs';
-COMMENT ON COLUMN projects.attachments IS 'Array of project attachments as JSONB';
-COMMENT ON COLUMN projects.custom_fields IS 'Custom project fields as JSONB';
+COMMENT ON COLUMN projects.attachments IS 'Array of project attachments';
+COMMENT ON COLUMN projects.custom_fields IS 'Custom fields for project-specific data';
