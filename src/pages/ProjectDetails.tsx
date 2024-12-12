@@ -15,7 +15,6 @@ import { ProjectHeader } from "@/components/projects/details/ProjectHeader";
 import type { Project } from "@/types/project";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { deleteProject } from '../lib/supabase';
 
 export default function ProjectDetails() {
   const { id } = useParams();
@@ -45,8 +44,12 @@ export default function ProjectDetails() {
       return;
     }
 
-    // Show confirmation dialog
-    if (!window.confirm(isRTL ? "هل أنت متأكد من حذف هذا المشروع؟" : "Are you sure you want to delete this project?")) {
+    // Show confirmation dialog with more details
+    if (!window.confirm(
+      isRTL 
+        ? "هل أنت متأكد من حذف هذا المشروع؟ سيتم حذف جميع البيانات المرتبطة به بما في ذلك المهام والتعليقات والإشعارات."
+        : "Are you sure you want to delete this project? This will delete all associated data including tasks, comments, and notifications."
+    )) {
       return;
     }
 
@@ -57,16 +60,32 @@ export default function ProjectDetails() {
       if (error) throw error;
 
       if (data.success) {
-        toast.success(isRTL ? "تم حذف المشروع بنجاح" : "Project deleted successfully");
+        // Show success message with deletion details
+        const deletedCounts = data.deleted_counts;
+        const deletionDetails = isRTL
+          ? `تم حذف المشروع وكل البيانات المرتبطة به (${Object.entries(deletedCounts)
+              .map(([key, count]) => `${key}: ${count}`)
+              .join(', ')})`
+          : `Project and all associated data deleted (${Object.entries(deletedCounts)
+              .map(([key, count]) => `${key}: ${count}`)
+              .join(', ')})`;
+        
+        toast.success(deletionDetails);
         navigate("/projects");
       } else {
         console.error('Failed to delete project:', data.error);
-        toast.error(isRTL ? `فشل في حذف المشروع: ${data.error}` : `Failed to delete project: ${data.error}`);
+        toast.error(isRTL 
+          ? `فشل في حذف المشروع: ${data.error}`
+          : `Failed to delete project: ${data.error}`
+        );
       }
     } catch (error) {
       console.error('Error in handleDeleteProject:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      toast.error(isRTL ? `حدث خطأ أثناء حذف المشروع: ${errorMessage}` : `Error deleting project: ${errorMessage}`);
+      toast.error(isRTL 
+        ? `حدث خطأ أثناء حذف المشروع: ${errorMessage}`
+        : `Error deleting project: ${errorMessage}`
+      );
     }
   };
 
@@ -135,68 +154,6 @@ export default function ProjectDetails() {
     }
   };
 
-  const forceDeleteProject = async () => {
-    if (!project?.id) {
-      toast.error(isRTL ? "معرف المشروع غير صالح" : "Invalid project ID");
-      return;
-    }
-
-    try {
-      console.log('Starting project deletion, ID:', project.id);
-
-      // First, delete all AI insights for this project
-      const { data: insights, error: insightsQueryError } = await supabase
-        .from('ai_project_insights')
-        .select('id')
-        .eq('project_id', project.id);
-
-      if (insightsQueryError) {
-        console.error('Error querying AI insights:', insightsQueryError);
-        throw insightsQueryError;
-      }
-
-      if (insights && insights.length > 0) {
-        console.log(`Found ${insights.length} AI insights to delete`);
-        
-        // Delete each insight
-        for (const insight of insights) {
-          const { error: deleteError } = await supabase
-            .from('ai_project_insights')
-            .delete()
-            .eq('id', insight.id);
-
-          if (deleteError) {
-            console.error('Error deleting insight:', deleteError);
-            throw deleteError;
-          }
-        }
-        
-        console.log('All AI insights deleted successfully');
-      } else {
-        console.log('No AI insights found for this project');
-      }
-
-      // Now try to delete the project
-      console.log('Deleting project...');
-      const { error: projectDeleteError } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', project.id);
-
-      if (projectDeleteError) {
-        console.error('Error deleting project:', projectDeleteError);
-        throw projectDeleteError;
-      }
-
-      console.log('Project deleted successfully');
-      toast.success(isRTL ? "تم حذف المشروع بنجاح" : "Project deleted successfully");
-      navigate("/projects");
-    } catch (error) {
-      console.error('Error in force delete:', error);
-      toast.error(isRTL ? "حدث خطأ أثناء حذف المشروع" : "Error deleting project");
-    }
-  };
-
   if (isLoading) {
     return (
       <DashboardLayout sidebarOpen={open} setSidebarOpen={setOpen}>
@@ -239,14 +196,6 @@ export default function ProjectDetails() {
                 onDelete={handleDeleteProject}
                 onUpdate={handleSubmit}
               />
-              <Button 
-                variant="destructive"
-                onClick={forceDeleteProject}
-                className={cn("gap-2", isRTL && "flex-row-reverse")}
-              >
-                <Trash2 className="h-4 w-4" />
-                {isRTL ? "حذف نهائي" : "Force Delete"}
-              </Button>
             </div>
 
             {/* Images Carousel */}
