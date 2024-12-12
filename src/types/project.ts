@@ -1,5 +1,5 @@
 export interface Project {
-  id?: string;
+  id: string;
   name: string;
   description?: string | null;
   project_type?: string | null;
@@ -19,14 +19,6 @@ export interface Project {
   location?: string | null;
   operating_company?: string | null;
   project_area?: string | null;
-  project_division?: string | null;
-  available_units?: string | null;
-  floors_count?: number | null;
-  images?: string[];
-  progress?: number;
-  video?: string | null;
-  developer_id?: string | null;
-  user_id?: string;
   created_at?: string;
   updated_at?: string;
 }
