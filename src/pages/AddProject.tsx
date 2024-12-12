@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { DashboardSidebar } from "@/components/layouts/DashboardSidebar";
-import { PropertyForm } from "@/components/forms/PropertyForm";
+import { ProjectForm } from "@/components/forms/ProjectForm";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useProjectMutations } from "@/hooks/useProjectMutations";
-import type { Property } from "@/types/property";
+import type { ProjectFormData } from "@/components/forms/projectFormSchema";
 import { supabase } from "@/integrations/supabase/client";
 
 const AddProject = () => {
@@ -17,7 +17,7 @@ const AddProject = () => {
   const navigate = useNavigate();
   const { addProject } = useProjectMutations();
 
-  const handleSubmit = async (data: Property) => {
+  const handleSubmit = async (data: ProjectFormData) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -64,22 +64,19 @@ const AddProject = () => {
 
       // Create project with uploaded image URLs
       await addProject.mutateAsync({
-        name: data.title,
+        name: data.name,
         description: data.description || null,
-        price: `${data.pricePerMeterFrom || ''} - ${data.pricePerMeterTo || ''}`,
-        location: data.location || null,
-        operating_company: data.operatingCompany || null,
-        project_area: data.area || null,
-        project_division: data.projectSections || null,
-        available_units: data.availableUnits || null,
-        status: "planned",
+        project_type: data.project_type || null,
+        project_manager: data.project_manager || null,
+        start_date: data.start_date || null,
+        end_date: data.end_date || null,
+        status: data.status || "active",
+        priority: data.priority || "medium",
+        estimated_budget: data.estimated_budget || null,
+        actual_budget: data.actual_budget || null,
+        completion_percentage: data.completion_percentage || 0,
         user_id: session.user.id,
-        floors_count: null,
         images: uploadedImages,
-        progress: 0,
-        start_date: data.deliveryDate || null,
-        video: null,
-        developer_id: null,
       });
       
       toast.success(isRTL ? 'تم إضافة المشروع بنجاح' : 'Project added successfully');
@@ -106,7 +103,7 @@ const AddProject = () => {
               {t("projects.addProject")}
             </h1>
             
-            <PropertyForm
+            <ProjectForm
               onSubmit={handleSubmit}
               onCancel={() => navigate("/projects")}
             />
