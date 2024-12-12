@@ -1,0 +1,19 @@
+project_id = "jrxxemchkytvqqsvloso"
+[api]
+schemas = ["public", "storage", "graphql_public"]
+
+[functions]
+[functions.delete-user]
+verify_jwt = true
+
+[functions.generate-with-gemini]
+verify_jwt = true
+
+[functions.generate-image]
+verify_jwt = true
+
+[functions.set-admin]
+verify_jwt = true
+
+[functions.list-users]
+verify_jwt = true

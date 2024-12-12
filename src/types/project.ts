@@ -1,0 +1,21 @@
+export type Project = {
+  id: string;
+  name: string;
+  description: string | null;
+  location: string | null;
+  start_date: string | null;
+  status: string | null;
+  price: string | null;
+  operating_company: string | null;
+  project_area: string | null;
+  project_division: string | null;
+  floors_count: string | null;
+  available_units: string | null;
+  progress: number | null;
+  images: string[] | null;
+  video: string | null;
+  developer_id: string | null;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+};
