@@ -2,40 +2,31 @@ export const projectsTranslations = {
   title: "المشاريع",
   addProject: "إضافة مشروع",
   editProject: "تعديل المشروع",
-  exportAsWebPage: "تصدير كصفحة ويب",
-  selectFieldsToShare: "اختر الحقول المراد مشاركتها",
-  noImages: "لا توجد صور متاحة",
-  viewDeveloperProjects: "عرض مشاريع المطور",
-  share: {
-    title: "مشاركة المشروع",
-    selectFields: "اختر الحقول المراد مشاركتها",
-    download: "تحميل كصفحة ويب",
-    shareVia: "مشاركة عبر"
-  },
-  form: {
-    title: "عنوان المشروع",
-    description: "الوصف",
-    projectType: "نوع المشروع",
-    pricePerMeterFrom: "سعر المتر من",
-    pricePerMeterTo: "سعر المتر إلى",
-    operatingCompany: "شركة الإدارة والتشغيل",
-    location: "الموقع",
-    deliveryDate: "تاريخ التسليم",
-    selectType: "اختر النوع",
-    selectStatus: "اختر الحالة",
-    images: "الصور",
-    video: "الفيديو",
-    success: "تم حفظ المشروع بنجاح",
-    deleteSuccess: "تم حذف المشروع بنجاح",
-    name: "الاسم",
-    price: "السعر",
-    projectArea: "مساحة المشروع",
-    floorsCount: "عدد الطوابق",
-    availableUnits: "الوحدات المتاحة",
-    progress: "نسبة الإنجاز",
-    status: "الحالة",
+  fields: {
+    name: "اسم المشروع",
+    description: "وصف المشروع",
+    type: "نوع المشروع",
+    manager: "مدير المشروع",
     startDate: "تاريخ البدء",
-    details: "تفاصيل المشروع"
+    endDate: "تاريخ الانتهاء",
+    status: "حالة المشروع",
+    priority: "الأولوية",
+    estimatedBudget: "الميزانية المتوقعة",
+    actualBudget: "الميزانية الفعلية",
+    completionPercentage: "نسبة الإنجاز",
+    price: "السعر",
+    projectArea: "مساحة المشروع"
+  },
+  placeholders: {
+    name: "أدخل اسم المشروع",
+    description: "أدخل وصف المشروع",
+    type: "اختر نوع المشروع",
+    manager: "اختر مدير المشروع",
+    status: "اختر حالة المشروع",
+    priority: "اختر أولوية المشروع",
+    estimatedBudget: "أدخل الميزانية المتوقعة",
+    actualBudget: "أدخل الميزانية الفعلية",
+    completionPercentage: "أدخل نسبة الإنجاز"
   },
   types: {
     residential: "سكني",
@@ -47,7 +38,20 @@ export const projectsTranslations = {
   },
   status: {
     planned: "مخطط",
-    underConstruction: "قيد الإنشاء",
-    completed: "مكتمل"
+    inProgress: "قيد التنفيذ",
+    completed: "مكتمل",
+    onHold: "متوقف",
+    cancelled: "ملغي"
+  },
+  priority: {
+    low: "منخفضة",
+    medium: "متوسطة",
+    high: "عالية",
+    urgent: "عاجل"
+  },
+  messages: {
+    success: "تم حفظ المشروع بنجاح",
+    deleteSuccess: "تم حذف المشروع بنجاح",
+    error: "حدث خطأ أثناء حفظ المشروع"
   }
 } as const;

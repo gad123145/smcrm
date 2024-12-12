@@ -35,7 +35,7 @@ const PROJECT_PRIORITY = [
 
 export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
   const { t } = useTranslation();
-
+  
   return (
     <div className="space-y-4 rtl:space-x-reverse">
       <FormField
@@ -43,9 +43,9 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t('projects.fields.name')}</FormLabel>
+            <FormLabel>{t('project.fields.name')}</FormLabel>
             <FormControl>
-              <Input placeholder={t('projects.placeholders.name')} {...field} className="font-normal" />
+              <Input placeholder={t('project.placeholders.name')} {...field} className="font-normal" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -57,9 +57,9 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t('projects.fields.description')}</FormLabel>
+            <FormLabel>{t('project.fields.description')}</FormLabel>
             <FormControl>
-              <Textarea placeholder={t('projects.placeholders.description')} {...field} className="font-normal min-h-[100px]" />
+              <Textarea placeholder={t('project.placeholders.description')} {...field} className="font-normal min-h-[100px]" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -71,17 +71,17 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
         name="project_type"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t('projects.fields.type')}</FormLabel>
+            <FormLabel>{t('project.fields.type')}</FormLabel>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <FormControl>
                 <SelectTrigger className="font-normal">
-                  <SelectValue placeholder={t('projects.placeholders.type')} />
+                  <SelectValue placeholder={t('project.placeholders.type')} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
                 {PROJECT_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
-                    {t(`projects.types.${type}`)}
+                    {t(`project.types.${type}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -96,9 +96,9 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
         name="project_manager"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t('projects.fields.manager')}</FormLabel>
+            <FormLabel>{t('project.fields.manager')}</FormLabel>
             <FormControl>
-              <Input placeholder={t('projects.placeholders.manager')} {...field} className="font-normal" />
+              <Input placeholder={t('project.placeholders.manager')} {...field} className="font-normal" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -111,7 +111,7 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
           name="start_date"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>{t('projects.fields.startDate')}</FormLabel>
+              <FormLabel>{t('project.fields.startDate')}</FormLabel>
               <DatePicker
                 date={field.value ? new Date(field.value) : undefined}
                 setDate={(date) => field.onChange(date?.toISOString())}
@@ -126,7 +126,7 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
           name="end_date"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>{t('projects.fields.endDate')}</FormLabel>
+              <FormLabel>{t('project.fields.endDate')}</FormLabel>
               <DatePicker
                 date={field.value ? new Date(field.value) : undefined}
                 setDate={(date) => field.onChange(date?.toISOString())}
@@ -143,17 +143,17 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('projects.fields.status')}</FormLabel>
+              <FormLabel>{t('project.fields.status')}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger className="font-normal">
-                    <SelectValue placeholder={t('projects.placeholders.status')} />
+                    <SelectValue placeholder={t('project.placeholders.status')} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   {PROJECT_STATUS.map((status) => (
                     <SelectItem key={status} value={status}>
-                      {t(`projects.status.${status}`)}
+                      {t(`project.status.${status}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -168,17 +168,17 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
           name="priority"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('projects.fields.priority')}</FormLabel>
+              <FormLabel>{t('project.fields.priority')}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger className="font-normal">
-                    <SelectValue placeholder={t('projects.placeholders.priority')} />
+                    <SelectValue placeholder={t('project.placeholders.priority')} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   {PROJECT_PRIORITY.map((priority) => (
                     <SelectItem key={priority} value={priority}>
-                      {t(`projects.priority.${priority}`)}
+                      {t(`project.priority.${priority}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -195,9 +195,9 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
           name="estimated_budget"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('projects.fields.estimatedBudget')}</FormLabel>
+              <FormLabel>{t('project.fields.estimatedBudget')}</FormLabel>
               <FormControl>
-                <Input type="number" placeholder={t('projects.placeholders.estimatedBudget')} {...field} className="font-normal" />
+                <Input type="number" placeholder={t('project.placeholders.estimatedBudget')} {...field} className="font-normal" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -209,9 +209,9 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
           name="actual_budget"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('projects.fields.actualBudget')}</FormLabel>
+              <FormLabel>{t('project.fields.actualBudget')}</FormLabel>
               <FormControl>
-                <Input type="number" placeholder={t('projects.placeholders.actualBudget')} {...field} className="font-normal" />
+                <Input type="number" placeholder={t('project.placeholders.actualBudget')} {...field} className="font-normal" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -224,11 +224,11 @@ export function BasicProjectFields({ control }: BasicProjectFieldsProps) {
         name="completion_percentage"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t('projects.fields.completionPercentage')}</FormLabel>
+            <FormLabel>{t('project.fields.completionPercentage')}</FormLabel>
             <FormControl>
               <Input 
                 type="number" 
-                placeholder={t('projects.placeholders.completionPercentage')} 
+                placeholder={t('project.placeholders.completionPercentage')} 
                 min="0"
                 max="100"
                 {...field}
