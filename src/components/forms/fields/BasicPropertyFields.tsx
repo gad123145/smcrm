@@ -21,11 +21,13 @@ export function BasicPropertyFields({ form }: BasicPropertyFieldsProps) {
         name="title"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t("projects.form.title")}</FormLabel>
+            <FormLabel className={cn(isRTL && "font-cairo")}>
+              {t('properties.form.title')}
+            </FormLabel>
             <FormControl>
-              <Input {...field} className={isRTL ? "text-right" : "text-left"} />
+              <Input {...field} className={cn(isRTL && "text-right font-cairo")} />
             </FormControl>
-            <FormMessage />
+            <FormMessage className={cn(isRTL && "font-cairo")} />
           </FormItem>
         )}
       />
@@ -35,14 +37,19 @@ export function BasicPropertyFields({ form }: BasicPropertyFieldsProps) {
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t("projects.form.description")}</FormLabel>
+            <FormLabel className={cn(isRTL && "font-cairo")}>
+              {t('properties.form.description')}
+            </FormLabel>
             <FormControl>
-              <Textarea {...field} className={cn(
-                "min-h-[100px] resize-none",
-                isRTL ? "text-right" : "text-left"
-              )} />
+              <Textarea 
+                {...field} 
+                className={cn(
+                  "min-h-[100px] resize-none",
+                  isRTL && "text-right font-cairo"
+                )} 
+              />
             </FormControl>
-            <FormMessage />
+            <FormMessage className={cn(isRTL && "font-cairo")} />
           </FormItem>
         )}
       />

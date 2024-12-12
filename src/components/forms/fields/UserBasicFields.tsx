@@ -21,7 +21,7 @@ export function UserBasicFields({ form }: UserBasicFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel className={cn(isRTL && "font-cairo")}>
-              {isRTL ? "الاسم الكامل" : "Full Name"}
+              {t('users.name')}
             </FormLabel>
             <FormControl>
               <Input {...field} className={cn(isRTL && "text-right font-cairo")} />
@@ -37,7 +37,7 @@ export function UserBasicFields({ form }: UserBasicFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel className={cn(isRTL && "font-cairo")}>
-              {isRTL ? "البريد الإلكتروني" : "Email"}
+              {t('users.email')}
             </FormLabel>
             <FormControl>
               <Input 
@@ -58,7 +58,7 @@ export function UserBasicFields({ form }: UserBasicFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel className={cn(isRTL && "font-cairo")}>
-              {isRTL ? "كلمة المرور" : "Password"}
+              {t('users.password')}
             </FormLabel>
             <FormControl>
               <Input 

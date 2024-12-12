@@ -11,7 +11,7 @@ interface PropertyBasicFieldsProps {
 }
 
 export function PropertyBasicFields({ form }: PropertyBasicFieldsProps) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
 
   return (
@@ -22,7 +22,7 @@ export function PropertyBasicFields({ form }: PropertyBasicFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel className={cn(isRTL && "font-cairo")}>
-              {isRTL ? "اسم العقار" : "Property Name"}
+              {t('properties.form.title')}
             </FormLabel>
             <FormControl>
               <Input {...field} className={cn(isRTL && "text-right font-cairo")} />
@@ -38,7 +38,7 @@ export function PropertyBasicFields({ form }: PropertyBasicFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel className={cn(isRTL && "font-cairo")}>
-              {isRTL ? "نوع العقار" : "Property Type"}
+              {t('properties.form.type')}
             </FormLabel>
             <FormControl>
               <Input {...field} className={cn(isRTL && "text-right font-cairo")} />
@@ -54,7 +54,7 @@ export function PropertyBasicFields({ form }: PropertyBasicFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel className={cn(isRTL && "font-cairo")}>
-              {isRTL ? "المساحة" : "Area"}
+              {t('properties.form.area')}
             </FormLabel>
             <FormControl>
               <Input {...field} className={cn(isRTL && "text-right font-cairo")} />
@@ -70,7 +70,7 @@ export function PropertyBasicFields({ form }: PropertyBasicFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel className={cn(isRTL && "font-cairo")}>
-              {isRTL ? "الموقع" : "Location"}
+              {t('properties.form.location')}
             </FormLabel>
             <FormControl>
               <Input {...field} className={cn(isRTL && "text-right font-cairo")} />
@@ -86,7 +86,7 @@ export function PropertyBasicFields({ form }: PropertyBasicFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel className={cn(isRTL && "font-cairo")}>
-              {isRTL ? "السعر" : "Price"}
+              {t('properties.form.price')}
             </FormLabel>
             <FormControl>
               <Input {...field} className={cn(isRTL && "text-right font-cairo")} />
@@ -102,7 +102,7 @@ export function PropertyBasicFields({ form }: PropertyBasicFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel className={cn(isRTL && "font-cairo")}>
-              {isRTL ? "رقم هاتف المالك" : "Owner Phone"}
+              {t('properties.form.ownerPhone')}
             </FormLabel>
             <FormControl>
               <Input {...field} className={cn(isRTL && "text-right font-cairo")} />
@@ -118,7 +118,7 @@ export function PropertyBasicFields({ form }: PropertyBasicFieldsProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel className={cn(isRTL && "font-cairo")}>
-              {isRTL ? "وصف العقار" : "Property Description"}
+              {t('properties.form.description')}
             </FormLabel>
             <FormControl>
               <Textarea 
