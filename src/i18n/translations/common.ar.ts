@@ -111,9 +111,15 @@ export const commonTranslations = {
   },
   sync: {
     button: "مزامنة",
-    lastSync: "آخر مزامنة: {{time}}",
-    success: "تمت المزامنة بنجاح",
-    error: "فشل في المزامنة",
+    success: 'تمت المزامنة بنجاح',
+    error: 'حدث خطأ أثناء المزامنة',
+    initError: 'فشل في تهيئة خدمة المزامنة',
+    inProgress: 'جاري المزامنة...',
+    dataAdded: 'تمت إضافة بيانات جديدة في {{table}}',
+    dataUpdated: 'تم تحديث البيانات في {{table}}',
+    dataDeleted: 'تم حذف البيانات من {{table}}',
+    profileUpdated: 'تم تحديث معلومات الملف الشخصي',
+    lastSync: 'آخر مزامنة: {{time}}',
     noSyncYet: "لم تتم المزامنة بعد",
     syncedItems: "العناصر المتزامنة",
     errorDetails: "تفاصيل الخطأ"

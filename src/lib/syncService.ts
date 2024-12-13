@@ -9,6 +9,7 @@ export interface SyncService {
 
 export class SupabaseSync implements SyncService {
   private userId: string;
+  private maxRetries = 3;
 
   constructor(userId: string) {
     this.userId = userId;
@@ -18,109 +19,94 @@ export class SupabaseSync implements SyncService {
     return i18next.t(key);
   }
 
-  async syncData(): Promise<void> {
+  private async createSyncLog(status: 'in_progress' | 'success' | 'error', error?: string) {
     try {
-      // Start sync
-      await this.createSyncLog('in_progress');
-
-      // 1. Sync Clients
-      const { data: clients, error: clientsError } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('user_id', this.userId);
-      if (clientsError) throw clientsError;
-
-      // 2. Sync Companies
-      const { data: companies, error: companiesError } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('user_id', this.userId);
-      if (companiesError) throw companiesError;
-
-      // 3. Sync Properties
-      const { data: properties, error: propertiesError } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('user_id', this.userId);
-      if (propertiesError) throw propertiesError;
-
-      // 4. Sync Projects
-      const { data: projects, error: projectsError } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user_id', this.userId);
-      if (projectsError) throw projectsError;
-
-      // 5. Sync Tasks
-      const { data: tasks, error: tasksError } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('user_id', this.userId);
-      if (tasksError) throw tasksError;
-
-      // 6. Sync Notes
-      const { data: notes, error: notesError } = await supabase
-        .from('notes')
-        .select('*')
-        .eq('user_id', this.userId);
-      if (notesError) throw notesError;
-
-      // 7. Sync Documents
-      const { data: documents, error: documentsError } = await supabase
-        .from('documents')
-        .select('*')
-        .eq('user_id', this.userId);
-      if (documentsError) throw documentsError;
-
-      // 8. Sync Activities
-      const { data: activities, error: activitiesError } = await supabase
-        .from('activities')
-        .select('*')
-        .eq('user_id', this.userId);
-      if (activitiesError) throw activitiesError;
-
-      // 9. Sync Notifications
-      const { data: notifications, error: notificationsError } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', this.userId);
-      if (notificationsError) throw notificationsError;
-
-      // 10. Sync User Settings
-      const { data: settings, error: settingsError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', this.userId)
-        .single();
-      if (settingsError) throw settingsError;
-
-      // 11. Sync AI Project Insights
-      const { data: insights, error: insightsError } = await supabase
-        .from('ai_project_insights')
-        .select('*')
-        .eq('user_id', this.userId);
-      if (insightsError) throw insightsError;
-
-      // Update sync status on success
-      const syncResults = {
-        clients: clients?.length || 0,
-        companies: companies?.length || 0,
-        properties: properties?.length || 0,
-        projects: projects?.length || 0,
-        tasks: tasks?.length || 0,
-        notes: notes?.length || 0,
-        documents: documents?.length || 0,
-        activities: activities?.length || 0,
-        notifications: notifications?.length || 0,
-        insights: insights?.length || 0
-      };
-      await this.createSyncLog('success', syncResults);
-      toast.success(this.t('sync.success'));
-    } catch (error) {
-      console.error('Sync error:', error);
-      await this.createSyncLog('error', null, error.message);
-      toast.error(this.t('sync.error'));
+      const { error: logError } = await supabase
+        .from('sync_logs')
+        .insert({
+          user_id: this.userId,
+          status,
+          last_sync: new Date().toISOString(),
+          error_details: error
+        });
+      if (logError) console.error('Error creating sync log:', logError);
+    } catch (err) {
+      console.error('Failed to create sync log:', err);
     }
+  }
+
+  async syncData(): Promise<void> {
+    let retryCount = 0;
+    
+    while (retryCount < this.maxRetries) {
+      try {
+        await this.createSyncLog('in_progress');
+        
+        // Perform all sync operations
+        const syncOperations = [
+          this.syncTable('clients'),
+          this.syncTable('companies'),
+          this.syncTable('properties'),
+          this.syncTable('projects'),
+          this.syncTable('tasks'),
+          this.syncTable('notes'),
+          this.syncTable('documents'),
+          this.syncTable('activities'),
+          this.syncTable('notifications'),
+          this.syncTable('ai_project_insights'),
+          this.syncUserSettings()
+        ];
+
+        await Promise.all(syncOperations);
+        
+        // If successful, create success log and break
+        await this.createSyncLog('success');
+        toast.success(this.t('sync.success'));
+        break;
+      } catch (error) {
+        retryCount++;
+        console.error(`Sync attempt ${retryCount} failed:`, error);
+        
+        if (retryCount === this.maxRetries) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          await this.createSyncLog('error', errorMessage);
+          toast.error(this.t('sync.error'));
+          throw error;
+        }
+        
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+      }
+    }
+  }
+
+  private async syncTable(tableName: string) {
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .eq('user_id', this.userId);
+      
+    if (error) {
+      console.error(`Error syncing ${tableName}:`, error);
+      throw error;
+    }
+    
+    return data;
+  }
+
+  private async syncUserSettings() {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', this.userId)
+      .single();
+      
+    if (error) {
+      console.error('Error syncing user settings:', error);
+      throw error;
+    }
+    
+    return data;
   }
 
   async getLastSyncTime(): Promise<Date | null> {
@@ -145,26 +131,6 @@ export class SupabaseSync implements SyncService {
     } catch (error) {
       console.error('Error getting last sync time:', error);
       return null;
-    }
-  }
-
-  private async createSyncLog(status: string = 'success', details: any = null, errorDetails: string | null = null): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('sync_logs')
-        .insert({
-          user_id: this.userId,
-          status,
-          details,
-          error_details: errorDetails,
-          last_sync: new Date().toISOString()
-        });
-
-      if (error) {
-        console.error('Error creating sync log:', error);
-      }
-    } catch (error) {
-      console.error('Error creating sync log:', error);
     }
   }
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { SupabaseSync } from '@/lib/syncService';
+import { RealtimeSync } from '@/lib/realtimeSync';
 import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -39,62 +40,85 @@ export function SyncManager() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<SyncLog | null>(null);
   const [syncService, setSyncService] = useState<SupabaseSync | null>(null);
+  const [realtimeSync, setRealtimeSync] = useState<RealtimeSync | null>(null);
   const [syncProgress, setSyncProgress] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    const initializeSyncService = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const service = new SupabaseSync(user.id);
-        setSyncService(service);
-        const lastSyncTime = await service.getLastSyncTime();
-        if (lastSyncTime) {
-          const { data } = await supabase
-            .from('sync_logs')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('last_sync', { ascending: false })
-            .limit(1)
-            .single();
-          
-          setLastSync(data as SyncLog);
+    const initializeServices = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Initialize regular sync service
+          const service = new SupabaseSync(user.id);
+          setSyncService(service);
+
+          // Initialize and start realtime sync
+          const realtime = new RealtimeSync(user.id);
+          setRealtimeSync(realtime);
+          realtime.startRealtimeSync();
+
+          await refreshLastSyncStatus(user.id);
         }
+      } catch (error) {
+        console.error('Failed to initialize services:', error);
+        toast.error(t('sync.initError'));
       }
     };
 
-    initializeSyncService();
+    initializeServices();
+
+    // Cleanup function
+    return () => {
+      if (realtimeSync) {
+        realtimeSync.stopRealtimeSync();
+      }
+    };
   }, []);
+
+  const refreshLastSyncStatus = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('sync_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .order('last_sync', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (error) throw error;
+      setLastSync(data as SyncLog);
+    } catch (error) {
+      console.error('Failed to fetch sync status:', error);
+    }
+  };
 
   const handleSync = async () => {
     if (!syncService || isSyncing) return;
 
     setIsSyncing(true);
     setSyncProgress(0);
+    setRetryCount(0);
     
     const progressInterval = setInterval(() => {
-      setSyncProgress(prev => Math.min(prev + 10, 90));
+      setSyncProgress(prev => {
+        if (prev >= 90) return prev;
+        return prev + 10;
+      });
     }, 500);
 
     try {
       await syncService.syncData();
       setSyncProgress(100);
       
-      // Fetch updated sync details
+      // Refresh sync status
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data } = await supabase
-          .from('sync_logs')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('last_sync', { ascending: false })
-          .limit(1)
-          .single();
-        
-        setLastSync(data as SyncLog);
+        await refreshLastSyncStatus(user.id);
       }
     } catch (error) {
       console.error('Sync failed:', error);
-      toast.error(t('sync.error'));
+      setRetryCount(prev => prev + 1);
     } finally {
       clearInterval(progressInterval);
       setIsSyncing(false);
