@@ -14,34 +14,32 @@ export const initializeClientsSync = () => {
         table: 'clients'
       },
       async (payload) => {
+        if (!payload) return;
+        
         try {
           // تحديث البيانات في المخزن المحلي
           const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return;
+          if (!user) {
+            console.warn('User not authenticated');
+            return;
+          }
 
-          // جلب جميع العملاء المحدثين
-          const { data: clients, error } = await supabase
-            .from('clients')
-            .select(`
-              *,
-              assigned_to_profile:profiles!assigned_to(full_name),
-              created_by_profile:profiles!created_by(full_name)
-            `)
-            .order('created_at', { ascending: false });
-
-          if (error) throw error;
-
-          // تحديث المخزن المحلي
-          useClientStore.getState().setClients(clients || []);
-
-          // إظهار إشعار للمستخدم
-          if (payload.eventType === 'INSERT') {
+          // تحديث المخزن المحلي بناءً على نوع الحدث
+          const clientStore = useClientStore.getState();
+          
+          if (payload.eventType === 'INSERT' && payload.new) {
+            clientStore.addClient(payload.new);
             toast.success('تم إضافة عميل جديد');
-          } else if (payload.eventType === 'UPDATE') {
+          } 
+          else if (payload.eventType === 'UPDATE' && payload.new) {
+            clientStore.updateClient(payload.new);
             toast.info('تم تحديث بيانات العميل');
-          } else if (payload.eventType === 'DELETE') {
+          } 
+          else if (payload.eventType === 'DELETE' && payload.old) {
+            clientStore.deleteClient(payload.old.id);
             toast.warning('تم حذف العميل');
           }
+
         } catch (error) {
           console.error('Error syncing clients:', error);
           toast.error('حدث خطأ في مزامنة بيانات العملاء');
@@ -54,7 +52,7 @@ export const initializeClientsSync = () => {
       }
     });
 
-  // تنظيف الاشتراكات عند إغلاق التطبيق
+  // تنظيف الاشتراك عند إغلاق التطبيق
   window.addEventListener('beforeunload', () => {
     supabase.removeChannel(channel);
   });
