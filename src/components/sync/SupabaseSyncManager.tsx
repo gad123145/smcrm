@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
-import { SupabaseSync } from '@/lib/supabaseSync';
-import { supabase } from '@/lib/supabaseClient';
+import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { supabase } from '@/lib/supabaseClient';
+import { SupabaseSync } from '@/lib/supabaseSync';
+import { SupabaseCompanySync } from '@/lib/supabaseCompanySync';
 
 export function SupabaseSyncManager() {
   const { t } = useTranslation();
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const [syncService, setSyncService] = useState<SupabaseSync | null>(null);
+  const [companySync, setCompanySync] = useState<SupabaseCompanySync | null>(null);
 
   useEffect(() => {
     const initializeSyncService = async () => {
@@ -22,7 +24,10 @@ export function SupabaseSyncManager() {
         }
 
         const newSyncService = new SupabaseSync(user.id);
+        const newCompanySync = new SupabaseCompanySync(user.id);
+        
         setSyncService(newSyncService);
+        setCompanySync(newCompanySync);
         
         // Set up auto-sync
         await newSyncService.setupAutoSync(5); // Sync every 5 minutes
@@ -35,11 +40,11 @@ export function SupabaseSyncManager() {
           toast.success(t('sync.initialSyncComplete'));
         }
 
-        // Sync favorites
-        await newSyncService.syncFavorites();
+        // Initial company and project sync
+        await newCompanySync.syncAll();
       } catch (error) {
         console.error('Error initializing sync:', error);
-        toast.error(t('sync.errors.syncInitFailed'));
+        toast.error(t('errors.syncInitFailed'));
       }
     };
 
@@ -47,34 +52,37 @@ export function SupabaseSyncManager() {
   }, [t]);
 
   const handleManualSync = async () => {
-    if (!syncService) {
-      toast.error(t('sync.errors.syncServiceNotInitialized'));
+    if (!syncService || !companySync) {
+      toast.error(t('errors.syncServiceNotInitialized'));
       return;
     }
 
     setIsSyncing(true);
     try {
-      // Sync to cloud first
+      // Sync clients
       const uploadResult = await syncService.syncToCloud();
       if (!uploadResult.success) {
         throw new Error(uploadResult.message);
       }
 
-      // Then sync from cloud
       const downloadResult = await syncService.syncFromCloud();
       if (!downloadResult.success) {
         throw new Error(downloadResult.message);
       }
 
-      // Sync favorites
-      await syncService.syncFavorites();
+      // Sync companies and projects
+      const companySyncResult = await companySync.syncAll();
+      if (!companySyncResult.success) {
+        throw new Error(companySyncResult.message);
+      }
 
-      const syncTime = localStorage.getItem('last_sync_time');
+      const syncTime = new Date().toISOString();
+      localStorage.setItem('last_sync_time', syncTime);
       setLastSyncTime(syncTime);
       toast.success(t('sync.syncComplete'));
     } catch (error: any) {
       console.error('Manual sync error:', error);
-      toast.error(t('sync.errors.syncFailed') + ': ' + error.message);
+      toast.error(t('errors.syncFailed') + ': ' + error.message);
     } finally {
       setIsSyncing(false);
     }
