@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { SupabaseSync } from '@/lib/supabaseSync';
 import { SupabaseCompanySync } from '@/lib/supabaseCompanySync';
 
@@ -30,18 +30,13 @@ export function SupabaseSyncManager() {
         setCompanySync(newCompanySync);
         
         // Set up auto-sync
-        await newSyncService.setupAutoSync(5); // Sync every 5 minutes
+        const autoSyncInterval = 5; // minutes
+        setInterval(() => {
+          handleManualSync();
+        }, autoSyncInterval * 60 * 1000);
         
         // Perform initial sync
-        const initialSyncSuccess = await newSyncService.initialSync();
-        if (initialSyncSuccess) {
-          const syncTime = localStorage.getItem('last_sync_time');
-          setLastSyncTime(syncTime);
-          toast.success(t('sync.initialSyncComplete'));
-        }
-
-        // Initial company and project sync
-        await newCompanySync.syncAll();
+        await handleManualSync();
       } catch (error) {
         console.error('Error initializing sync:', error);
         toast.error(t('errors.syncInitFailed'));
@@ -60,21 +55,25 @@ export function SupabaseSyncManager() {
     setIsSyncing(true);
     try {
       // Sync clients
-      const uploadResult = await syncService.syncToCloud();
-      if (!uploadResult.success) {
-        throw new Error(uploadResult.message);
+      console.log('Starting client sync...');
+      const clientUploadResult = await syncService.syncToCloud();
+      if (!clientUploadResult.success) {
+        throw new Error(clientUploadResult.message);
       }
 
-      const downloadResult = await syncService.syncFromCloud();
-      if (!downloadResult.success) {
-        throw new Error(downloadResult.message);
+      const clientDownloadResult = await syncService.syncFromCloud();
+      if (!clientDownloadResult.success) {
+        throw new Error(clientDownloadResult.message);
       }
+      console.log('Client sync completed');
 
       // Sync companies and projects
+      console.log('Starting company and project sync...');
       const companySyncResult = await companySync.syncAll();
       if (!companySyncResult.success) {
         throw new Error(companySyncResult.message);
       }
+      console.log('Company and project sync completed');
 
       const syncTime = new Date().toISOString();
       localStorage.setItem('last_sync_time', syncTime);
