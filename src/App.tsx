@@ -12,6 +12,9 @@ import { initializeClientsSync } from "@/lib/clients-sync";
 import { useClientStore } from "@/stores/clientStore";
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
@@ -28,46 +31,63 @@ function App() {
   }));
 
   useEffect(() => {
-    // تهيئة المزامنة في الوقت الفعلي
-    const realtimeChannel = initializeRealtimeSync();
-    const clientsChannel = initializeClientsSync();
-    
-    // التحقق من حالة المصادقة
+    // التحقق من حالة المصادقة الحالية
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setIsAuthenticated(!!user);
+        
+        if (user) {
+          // تهيئة المزامنة في الوقت الفعلي فقط إذا كان المستخدم مسجل الدخول
+          const realtimeChannel = initializeRealtimeSync();
+          const clientsChannel = initializeClientsSync();
+
+          // جلب بيانات العملاء الأولية
+          const { data: clients, error } = await supabase
+            .from('clients')
+            .select(`
+              *,
+              assigned_to_profile:profiles!assigned_to(full_name),
+              created_by_profile:profiles!created_by(full_name)
+            `)
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+          useClientStore.getState().setClients(clients || []);
+
+          // تنظيف عند إلغاء التحميل
+          return () => {
+            supabase.removeChannel(realtimeChannel);
+            supabase.removeChannel(clientsChannel);
+          };
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error);
+        toast.error('حدث خطأ في التحقق من المصادقة');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // التحقق من حالة المصادقة
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN') {
-        // عند تسجيل الدخول، قم بجلب بيانات العملاء
-        if (session?.user?.id) {
-          try {
-            const { data: clients, error } = await supabase
-              .from('clients')
-              .select(`
-                *,
-                assigned_to_profile:profiles!assigned_to(full_name),
-                created_by_profile:profiles!created_by(full_name)
-              `)
-              .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            useClientStore.getState().setClients(clients || []);
-          } catch (error) {
-            console.error('Error fetching clients:', error);
-            toast.error('حدث خطأ في جلب بيانات العملاء');
-          }
-        }
+        setIsAuthenticated(true);
         toast.success('تم تسجيل الدخول بنجاح');
       } else if (event === 'SIGNED_OUT') {
-        // عند تسجيل الخروج، قم بمسح بيانات العملاء
+        setIsAuthenticated(false);
         useClientStore.getState().setClients([]);
         queryClient.clear();
         toast.info('تم تسجيل الخروج');
       }
     });
 
-    // تنظيف الموارد عند إغلاق التطبيق
     return () => {
       subscription.unsubscribe();
-      supabase.removeChannel(realtimeChannel);
-      supabase.removeChannel(clientsChannel);
     };
   }, [queryClient]);
 
@@ -75,17 +95,20 @@ function App() {
     supabase.auth.signOut();
     queryClient.clear();
     useClientStore.getState().setClients([]);
+    setIsAuthenticated(false);
     toast.error('انتهت صلاحية الجلسة. الرجاء تسجيل الدخول مرة أخرى.');
   };
 
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">جاري التحميل...</div>;
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <TooltipProvider>
-          <AppRoutes />
-          <Toaster />
-        </TooltipProvider>
-      </BrowserRouter>
+      <TooltipProvider>
+        <AppRoutes isAuthenticated={isAuthenticated} />
+        <Toaster />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
