@@ -1,5 +1,5 @@
 [build]
-  command = "npm install --no-optional && npm run build"
+  command = "npx vite build"
   publish = "dist"
   ignore = "git diff --quiet HEAD^ HEAD ./src"
 
@@ -14,8 +14,4 @@
   status = 200
 
 [build.processing]
-  skip_processing = false
-
-[build.processing.css]
-  bundle = true
-  minify = true
+  skip_processing = true
