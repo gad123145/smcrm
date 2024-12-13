@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient';
-import { getCompanies, saveCompanies } from './localStorage/companies';
-import { getProjects, saveProjects } from './localStorage/projects';
+import { companyService } from '@/services/companyService';
+import { projectService } from '@/services/projectService';
+import type { Company, Project } from '@/types';
 
 export class SupabaseCompanySync {
   private userId: string;
@@ -11,22 +12,19 @@ export class SupabaseCompanySync {
 
   async syncCompaniesToCloud() {
     try {
-      const localCompanies = getCompanies();
-      
-      for (const company of localCompanies) {
-        const { error } = await supabase
-          .from('companies')
-          .upsert({
-            id: company.id,
-            name: company.name,
-            description: company.description,
-            location: company.location,
-            contact_info: company.contact_info,
-            user_id: this.userId,
-            last_synced: new Date().toISOString()
-          });
+      const { data: companies, error: fetchError } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('user_id', this.userId);
 
-        if (error) throw error;
+      if (fetchError) throw fetchError;
+
+      // Update or insert companies
+      for (const company of companies || []) {
+        await companyService.updateCompany(company.id, {
+          ...company,
+          last_synced: new Date().toISOString()
+        });
       }
 
       return { success: true };
@@ -38,24 +36,19 @@ export class SupabaseCompanySync {
 
   async syncProjectsToCloud() {
     try {
-      const localProjects = getProjects();
-      
-      for (const project of localProjects) {
-        const { error } = await supabase
-          .from('projects')
-          .upsert({
-            id: project.id,
-            name: project.name,
-            description: project.description,
-            location: project.location,
-            price: project.price,
-            operating_company: project.operating_company,
-            company_id: project.company_id,
-            user_id: this.userId,
-            last_synced: new Date().toISOString()
-          });
+      const { data: projects, error: fetchError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', this.userId);
 
-        if (error) throw error;
+      if (fetchError) throw fetchError;
+
+      // Update or insert projects
+      for (const project of projects || []) {
+        await projectService.updateProject(project.id, {
+          ...project,
+          last_synced: new Date().toISOString()
+        });
       }
 
       return { success: true };
@@ -67,18 +60,8 @@ export class SupabaseCompanySync {
 
   async syncCompaniesFromCloud() {
     try {
-      const { data: companies, error } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('user_id', this.userId);
-
-      if (error) throw error;
-
-      if (companies) {
-        saveCompanies(companies);
-      }
-
-      return { success: true };
+      const companies = await companyService.getCompanies();
+      return { success: true, data: companies };
     } catch (error) {
       console.error('Error syncing companies from cloud:', error);
       return { success: false, message: error.message };
@@ -87,18 +70,8 @@ export class SupabaseCompanySync {
 
   async syncProjectsFromCloud() {
     try {
-      const { data: projects, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user_id', this.userId);
-
-      if (error) throw error;
-
-      if (projects) {
-        saveProjects(projects);
-      }
-
-      return { success: true };
+      const projects = await projectService.getProjects();
+      return { success: true, data: projects };
     } catch (error) {
       console.error('Error syncing projects from cloud:', error);
       return { success: false, message: error.message };
