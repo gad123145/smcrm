@@ -19,12 +19,7 @@ export const companiesTranslations = {
     deleteSuccess: "Company deleted successfully",
     editSuccess: "Company updated successfully",
     addSuccess: "Company added successfully",
-    error: "An error occurred. Please try again."
-  },
-  companies: {
-    title: "Companies",
-    addCompany: "Add Company",
-    editCompany: "Edit Company",
+    error: "An error occurred. Please try again.",
     companyName: "Company Name",
     companyDescription: "Company Description",
     enterCompanyName: "Enter company name",
@@ -50,9 +45,7 @@ export const companiesTranslations = {
     },
     loading: "Loading companies...",
     noCompanies: "No companies found",
-    deleteConfirmation: "Are you sure you want to delete this company?",
     deleteWarning: "This action cannot be undone.",
-    cancel: "Cancel",
     delete: "Delete",
   }
 } as const;
