@@ -1,11 +1,11 @@
 [build]
-  command = "npm install && npm run build"
+  command = "npm install --no-optional && npm run build"
   publish = "dist"
   ignore = "git diff --quiet HEAD^ HEAD ./src"
 
 [build.environment]
   NODE_VERSION = "18"
-  NPM_FLAGS = "--legacy-peer-deps --platform=linux --arch=x64"
+  NPM_FLAGS = "--legacy-peer-deps"
   CI = "false"
 
 [[redirects]]
