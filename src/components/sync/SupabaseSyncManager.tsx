@@ -15,40 +15,73 @@ export function SupabaseSyncManager() {
   const [companySync, setCompanySync] = useState<SupabaseCompanySync | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     const initializeSyncService = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          toast.error(t('errors.sessionError'));
+          return;
+        }
+
+        if (!session?.user) {
+          console.log('No active session');
           toast.error(t('errors.notAuthenticated'));
           return;
         }
 
-        const newSyncService = new SupabaseSync(user.id);
-        const newCompanySync = new SupabaseCompanySync(user.id);
+        if (!mounted) return;
+
+        const newSyncService = new SupabaseSync(session.user.id);
+        const newCompanySync = new SupabaseCompanySync(session.user.id);
         
         setSyncService(newSyncService);
         setCompanySync(newCompanySync);
         
-        // Set up auto-sync
-        const autoSyncInterval = 5; // minutes
-        setInterval(() => {
-          handleManualSync();
-        }, autoSyncInterval * 60 * 1000);
-        
         // Perform initial sync
         await handleManualSync();
+
+        // Set up auto-sync
+        const autoSyncInterval = setInterval(() => {
+          if (mounted) {
+            handleManualSync();
+          }
+        }, 5 * 60 * 1000); // 5 minutes
+
+        return () => clearInterval(autoSyncInterval);
       } catch (error) {
         console.error('Error initializing sync:', error);
-        toast.error(t('errors.syncInitFailed'));
+        if (mounted) {
+          toast.error(t('errors.syncInitFailed'));
+        }
       }
     };
 
     initializeSyncService();
+
+    return () => {
+      mounted = false;
+    };
   }, [t]);
 
   const handleManualSync = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      toast.error(t('errors.notAuthenticated'));
+      return;
+    }
+
     if (!syncService || !companySync) {
+      console.error('Sync services not initialized');
       toast.error(t('errors.syncServiceNotInitialized'));
+      return;
+    }
+
+    if (isSyncing) {
+      console.log('Sync already in progress');
       return;
     }
 
@@ -58,12 +91,12 @@ export function SupabaseSyncManager() {
       console.log('Starting client sync...');
       const clientUploadResult = await syncService.syncToCloud();
       if (!clientUploadResult.success) {
-        throw new Error(clientUploadResult.message);
+        throw new Error(clientUploadResult.message || 'Client upload failed');
       }
 
       const clientDownloadResult = await syncService.syncFromCloud();
       if (!clientDownloadResult.success) {
-        throw new Error(clientDownloadResult.message);
+        throw new Error(clientDownloadResult.message || 'Client download failed');
       }
       console.log('Client sync completed');
 
@@ -71,7 +104,7 @@ export function SupabaseSyncManager() {
       console.log('Starting company and project sync...');
       const companySyncResult = await companySync.syncAll();
       if (!companySyncResult.success) {
-        throw new Error(companySyncResult.message);
+        throw new Error(companySyncResult.message || 'Company sync failed');
       }
       console.log('Company and project sync completed');
 
@@ -81,7 +114,7 @@ export function SupabaseSyncManager() {
       toast.success(t('sync.syncComplete'));
     } catch (error: any) {
       console.error('Manual sync error:', error);
-      toast.error(t('errors.syncFailed') + ': ' + error.message);
+      toast.error(t('errors.syncFailed') + ': ' + (error.message || 'Unknown error'));
     } finally {
       setIsSyncing(false);
     }
