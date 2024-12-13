@@ -32,7 +32,7 @@ export const getSidebarItems = async () => {
   const isAdminOrSupervisor = role === 'admin' || role === 'supervisor';
 
   const baseItems = [
-    { icon: LayoutDashboard, label: "dashboard.title", path: "/" },
+    { icon: LayoutDashboard, label: "nav.dashboard", path: "/" },
     { icon: Bot, label: "nav.assistant", path: "/assistant" },
     { icon: MessageCircle, label: "nav.chat", path: "/chat" },
     { 
@@ -41,24 +41,28 @@ export const getSidebarItems = async () => {
       path: "/clients", 
       hasSubmenu: true, 
       submenu: [
-        { icon: Users, label: "status.all" },
+        { icon: Users, label: "status.all", path: "/clients" },
         ...staticClientStatuses.map(status => ({
           icon: status.icon,
-          label: `status.${status.key}`
+          label: `status.${status.key}`,
+          path: `/clients/${status.key}`
         }))
       ]
     },
     { icon: Home, label: "nav.properties", path: "/properties" },
+    { icon: ClipboardList, label: "nav.projects", path: "/projects" },
     { icon: Building2, label: "nav.companies", path: "/companies" },
-    { icon: BookOpen, label: "nav.guides", path: "/guides" },
-    { icon: Users, label: "nav.users", path: "/users" },
     { icon: ClipboardList, label: "nav.tasks", path: "/tasks" },
     { icon: Bell, label: "nav.notifications", path: "/notifications" },
-    { icon: Settings, label: "nav.settings", path: "/settings" },
+    { icon: BookOpen, label: "nav.guides", path: "/guides" }
   ];
 
   if (isAdminOrSupervisor) {
-    baseItems.splice(8, 0, { icon: UserPlus, label: "nav.addUser", path: "/users/add" });
+    baseItems.push(
+      { icon: Users, label: "nav.users", path: "/users" },
+      { icon: UserPlus, label: "nav.addUser", path: "/users/add" },
+      { icon: Settings, label: "nav.settings", path: "/settings" }
+    );
   }
 
   return baseItems;

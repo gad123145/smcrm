@@ -1,18 +1,23 @@
-import { Button } from "@/components/ui/button";
-import { ChevronDown, Settings } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { getSidebarItems } from "@/data/sidebarItems";
-import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { ImportClientsSheet } from "../ImportClientsSheet";
-import { AddClientForm } from "../AddClientForm";
+import { Button } from "@/components/ui/button";
+import { getSidebarItems } from "@/data/sidebarItems";
+import { AddClientForm } from "@/components/AddClientForm";
+import { ImportClientsSheet } from "@/components/ImportClientsSheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChevronDown, RefreshCw, Settings, Users, Home, ClipboardList, Bell, UserPlus, Bot, Building2, MessageCircle, BookOpen, LayoutDashboard } from "lucide-react";
 
-type DashboardSidebarProps = {
+interface DashboardSidebarProps {
   open: boolean;
-};
+}
 
 export function DashboardSidebar({ open }: DashboardSidebarProps) {
   const { t, i18n } = useTranslation();
@@ -26,6 +31,18 @@ export function DashboardSidebar({ open }: DashboardSidebarProps) {
     };
     loadSidebarItems();
   }, []);
+
+  const navigation = sidebarItems.concat({
+    label: "sync.button",
+    href: '#',
+    icon: RefreshCw,
+    onClick: () => {
+      const syncManagerElement = document.querySelector('[data-sync-button]');
+      if (syncManagerElement) {
+        syncManagerElement.click();
+      }
+    }
+  });
 
   return (
     <aside
@@ -64,7 +81,7 @@ export function DashboardSidebar({ open }: DashboardSidebarProps) {
         </div>
 
         {/* Regular Menu Items */}
-        {sidebarItems.map((item, index) => (
+        {navigation.map((item, index) => (
           <div 
             key={item.label} 
             className={cn(
@@ -105,7 +122,7 @@ export function DashboardSidebar({ open }: DashboardSidebarProps) {
                         asChild
                       >
                         <Link 
-                          to={`/clients/${subItem.label.split('.')[1]}`}
+                          to={subItem.path || `/clients/${subItem.label}`}
                           className={cn(
                             "flex items-center gap-2 w-full",
                             isRTL ? "text-right" : "text-left"
@@ -127,12 +144,13 @@ export function DashboardSidebar({ open }: DashboardSidebarProps) {
                   isRTL ? "text-right" : "text-left"
                 )}
                 asChild
+                onClick={item.onClick}
               >
                 <Link 
-                  to={item.path}
-                  className="flex items-center gap-3"
+                  to={item.path || item.href}
+                  className="flex items-center gap-3 w-full"
                 >
-                  <item.icon className="h-5 w-5 text-gray-500 dark:text-gray-400 group-hover:text-primary transition-colors duration-200" />
+                  <item.icon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                   <span className={cn("flex-1", isRTL ? "text-right" : "text-left")}>{t(item.label)}</span>
                 </Link>
               </Button>

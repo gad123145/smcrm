@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "@/components/routing/ProtectedRoute";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import Index from "@/pages/Index";

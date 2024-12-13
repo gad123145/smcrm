@@ -82,10 +82,40 @@ export const commonTranslations = {
   resume: "استئناف",
   skip: "تخطي",
   previous: "السابق",
+  nav: {
+    dashboard: "لوحة التحكم",
+    clients: "العملاء",
+    properties: "العقارات",
+    projects: "المشاريع",
+    companies: "الشركات",
+    tasks: "المهام",
+    users: "المستخدمين",
+    settings: "الإعدادات",
+    notifications: "الإشعارات",
+    chat: "المحادثة",
+    assistant: "المساعد",
+    analytics: "التحليلات",
+    guides: "الأدلة"
+  },
   status: {
     active: "نشط",
     inactive: "غير نشط",
     completed: "مكتمل",
-    cancelled: "ملغي"
-  }
+    cancelled: "ملغي",
+    all: "جميع العملاء",
+    new: "عملاء جدد",
+    blocked: "عملاء محظورون"
+  },
+  dashboard: {
+    title: "لوحة التحكم"
+  },
+  sync: {
+    button: "مزامنة",
+    lastSync: "آخر مزامنة: {{time}}",
+    success: "تمت المزامنة بنجاح",
+    error: "فشل في المزامنة",
+    noSyncYet: "لم تتم المزامنة بعد",
+    syncedItems: "العناصر المتزامنة",
+    errorDetails: "تفاصيل الخطأ"
+  },
 } as const;

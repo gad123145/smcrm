@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { SyncManager } from '@/components/sync/SyncManager';
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -92,6 +93,7 @@ export function DashboardLayout({ children, sidebarOpen, setSidebarOpen }: Dashb
             <div className="relative hidden md:block">
               <InstantClientSearch />
             </div>
+            <SyncManager />
             <NotificationsPopover unreadCount={unreadCount} />
             <ThemeToggle />
             <LanguageSwitcher />

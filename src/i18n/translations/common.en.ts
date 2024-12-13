@@ -101,4 +101,38 @@ export const commonTranslations = {
   skip: "Skip | تخطي",
   previous: "Previous | السابق",
   actions: "Actions | إجراءات",
+  nav: {
+    dashboard: "Dashboard",
+    clients: "Clients",
+    properties: "Properties",
+    projects: "Projects",
+    companies: "Companies",
+    tasks: "Tasks",
+    users: "Users",
+    settings: "Settings",
+    notifications: "Notifications",
+    chat: "Chat",
+    assistant: "Assistant",
+    analytics: "Analytics",
+    guides: "Guides"
+  },
+  status: {
+    all: "All Clients",
+    new: "New Clients",
+    active: "Active Clients",
+    inactive: "Inactive Clients",
+    blocked: "Blocked Clients"
+  },
+  dashboard: {
+    title: "Dashboard"
+  },
+  sync: {
+    button: "Sync",
+    lastSync: "Last sync: {{time}}",
+    success: "Sync completed successfully",
+    error: "Sync failed",
+    noSyncYet: "No sync yet",
+    syncedItems: "Synced Items",
+    errorDetails: "Error Details"
+  },
 } as const;
