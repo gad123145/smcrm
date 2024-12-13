@@ -1,11 +1,11 @@
 [build]
-  command = "npx vite build"
+  command = "npm install && npm run build"
   publish = "dist"
   ignore = "git diff --quiet HEAD^ HEAD ./src"
 
 [build.environment]
   NODE_VERSION = "18"
-  NPM_FLAGS = "--legacy-peer-deps"
+  NPM_FLAGS = "--legacy-peer-deps --no-optional"
   CI = "false"
 
 [[redirects]]
