@@ -5,7 +5,7 @@ import { Download } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
+import jsPDF from "jspdf";
 import type { Project } from "@/storage/projects";
 import { ProjectSharePreview } from "./ProjectSharePreview";
 
@@ -110,6 +110,8 @@ export function ProjectShareDialog({ project, isOpen, onClose }: ProjectShareDia
       const pdf = new jsPDF({
         orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
         unit: 'mm',
+        format: 'a4',
+        compress: true
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
