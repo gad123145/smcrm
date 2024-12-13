@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { SupabaseSync } from '@/lib/supabaseSync';
-import { SupabaseCompanySync } from '@/lib/supabaseCompanySync';
+import { cn } from '@/lib/utils';
 
 export function SupabaseSyncManager() {
   const { t } = useTranslation();
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const [syncService, setSyncService] = useState<SupabaseSync | null>(null);
-  const [companySync, setCompanySync] = useState<SupabaseCompanySync | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -22,13 +21,13 @@ export function SupabaseSyncManager() {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          console.error('Session error:', sessionError);
+          console.error('خطأ في الجلسة:', sessionError);
           toast.error(t('errors.sessionError'));
           return;
         }
 
         if (!session?.user) {
-          console.log('No active session');
+          console.log('لا توجد جلسة نشطة');
           toast.error(t('errors.notAuthenticated'));
           return;
         }
@@ -36,24 +35,21 @@ export function SupabaseSyncManager() {
         if (!mounted) return;
 
         const newSyncService = new SupabaseSync(session.user.id);
-        const newCompanySync = new SupabaseCompanySync(session.user.id);
-        
         setSyncService(newSyncService);
-        setCompanySync(newCompanySync);
         
-        // Perform initial sync
+        // المزامنة الأولية
         await handleManualSync();
 
-        // Set up auto-sync
+        // إعداد المزامنة التلقائية
         const autoSyncInterval = setInterval(() => {
           if (mounted) {
             handleManualSync();
           }
-        }, 5 * 60 * 1000); // 5 minutes
+        }, 5 * 60 * 1000); // كل 5 دقائق
 
         return () => clearInterval(autoSyncInterval);
       } catch (error) {
-        console.error('Error initializing sync:', error);
+        console.error('خطأ في تهيئة خدمة المزامنة:', error);
         if (mounted) {
           toast.error(t('errors.syncInitFailed'));
         }
@@ -74,47 +70,33 @@ export function SupabaseSyncManager() {
       return;
     }
 
-    if (!syncService || !companySync) {
-      console.error('Sync services not initialized');
+    if (!syncService) {
+      console.error('خدمة المزامنة غير مهيأة');
       toast.error(t('errors.syncServiceNotInitialized'));
       return;
     }
 
     if (isSyncing) {
-      console.log('Sync already in progress');
+      console.log('المزامنة قيد التنفيذ');
       return;
     }
 
     setIsSyncing(true);
     try {
-      // Sync clients
-      console.log('Starting client sync...');
-      const clientUploadResult = await syncService.syncToCloud();
-      if (!clientUploadResult.success) {
-        throw new Error(clientUploadResult.message || 'Client upload failed');
+      console.log('بدء المزامنة...');
+      const syncResult = await syncService.syncAll();
+      
+      if (!syncResult.success) {
+        throw new Error(syncResult.message || 'فشلت المزامنة');
       }
-
-      const clientDownloadResult = await syncService.syncFromCloud();
-      if (!clientDownloadResult.success) {
-        throw new Error(clientDownloadResult.message || 'Client download failed');
-      }
-      console.log('Client sync completed');
-
-      // Sync companies and projects
-      console.log('Starting company and project sync...');
-      const companySyncResult = await companySync.syncAll();
-      if (!companySyncResult.success) {
-        throw new Error(companySyncResult.message || 'Company sync failed');
-      }
-      console.log('Company and project sync completed');
 
       const syncTime = new Date().toISOString();
       localStorage.setItem('last_sync_time', syncTime);
       setLastSyncTime(syncTime);
       toast.success(t('sync.syncComplete'));
     } catch (error: any) {
-      console.error('Manual sync error:', error);
-      toast.error(t('errors.syncFailed') + ': ' + (error.message || 'Unknown error'));
+      console.error('خطأ في المزامنة اليدوية:', error);
+      toast.error(t('errors.syncFailed') + ': ' + (error.message || 'خطأ غير معروف'));
     } finally {
       setIsSyncing(false);
     }
@@ -137,7 +119,10 @@ export function SupabaseSyncManager() {
         )}
       </Button>
       {lastSyncTime && (
-        <span className="text-sm text-gray-500">
+        <span className={cn(
+          "text-sm text-gray-500",
+          "font-cairo"
+        )}>
           {t('sync.lastSync')}: {new Date(lastSyncTime).toLocaleString()}
         </span>
       )}

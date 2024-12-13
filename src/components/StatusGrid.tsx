@@ -36,25 +36,25 @@ export const StatusGrid = () => {
   }, []);
 
   const getStatusCount = (status: string) => {
-    return clients.filter(client => {
-      // If status is "all", count all clients
-      if (status === "all") return true;
-      
-      const statusMatch = client.status === status;
-      // If user is admin or supervisor, show all clients
-      if (userRole === 'admin' || userRole === 'supervisor') {
-        return statusMatch;
-      }
-      // For other users, only show assigned clients
-      return statusMatch && client.assignedTo;
-    }).length;
+    try {
+      console.log('Counting clients for status:', status);
+      return clients.filter(client => {
+        if (status === "all") return true;
+        return client?.status?.toLowerCase() === status.toLowerCase();
+      }).length;
+    } catch (error) {
+      console.error('Error counting clients:', error);
+      return 0;
+    }
   };
 
   const getTotalCount = () => {
-    if (userRole === 'admin' || userRole === 'supervisor') {
+    try {
       return clients.length;
+    } catch (error) {
+      console.error('Error getting total count:', error);
+      return 0;
     }
-    return clients.filter(client => client.assignedTo).length;
   };
 
   const handleToggleDisplay = () => {

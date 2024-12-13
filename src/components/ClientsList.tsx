@@ -19,6 +19,7 @@ interface ClientsListProps {
   selectedUser?: string | null;
   refreshTrigger?: number;
   onImportComplete?: () => void;
+  onClientClick?: (client: any) => void;
 }
 
 export function ClientsList({ 
@@ -27,7 +28,8 @@ export function ClientsList({
   showFavorites: externalShowFavorites = false,
   selectedUser: externalSelectedUser = null,
   refreshTrigger = 0,
-  onImportComplete
+  onImportComplete,
+  onClientClick
 }: ClientsListProps) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
@@ -45,23 +47,67 @@ export function ClientsList({
   const [favorites, setFavorites] = useState<string[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load clients from local storage
   useEffect(() => {
+    let isMounted = true;
+
     const loadClients = async () => {
       try {
-        const userId = 'local-user'; // Using a default user ID for local storage
-        const allClients = await clientStorage.getClients(userId);
-        const filteredClients = allClients.filter(client => client.status === status);
+        if (!clientStorage) return;
+        
+        const allClients = await clientStorage.getAllClients();
+        if (!isMounted) return;
+
+        console.log('Current status:', status);
+        const filteredClients = allClients.filter(client => {
+          // For "all" status, show all clients
+          if (status === "all") return true;
+          
+          // Otherwise filter by status
+          if (!client || !client.status) return false;
+          return client.status.toLowerCase() === status.toLowerCase();
+        });
+
+        if (!isMounted) return;
+        console.log('Filtered clients:', filteredClients);
         setClients(filteredClients);
       } catch (err: any) {
         console.error('Error loading clients:', err);
-        setError(err);
+        if (isMounted) {
+          setError(err);
+        }
       }
     };
 
     loadClients();
-  }, [status, refreshTrigger]);
+    return () => {
+      isMounted = false;
+    };
+  }, [status, refreshTrigger, clientStorage]);
+
+  // Remove postMessage error
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const allowedOrigins = [
+        window.location.origin,
+        'http://localhost:3000',
+        'http://192.168.1.110:5173'
+      ];
+      
+      if (!allowedOrigins.includes(event.origin)) {
+        console.log('Ignored message from untrusted origin:', event.origin);
+        return;
+      }
+
+      // Handle the message here
+      console.log('Received message from trusted origin:', event.origin);
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   // Update internal state when external props change
   useEffect(() => {
@@ -178,6 +224,24 @@ export function ClientsList({
     }
   };
 
+  const handleRowClick = useCallback((client: any) => {
+    try {
+      // Add loading state
+      setIsLoading(true);
+      
+      // Process click after a small delay to prevent UI freeze
+      setTimeout(() => {
+        if (onClientClick) {
+          onClientClick(client);
+        }
+        setIsLoading(false);
+      }, 0);
+    } catch (error) {
+      console.error('Error handling row click:', error);
+      setIsLoading(false);
+    }
+  }, [onClientClick]);
+
   const totalPages = Math.ceil(filteredClients.length / rowsPerPage);
 
   const isAllSelected = useMemo(() => 
@@ -191,11 +255,13 @@ export function ClientsList({
   };
 
   if (error) {
-    return (
-      <div className="text-center py-8 text-red-500">
-        {t("errors.loadingClients")}
-      </div>
-    );
+    return <div className="text-red-500">Error: {error.message}</div>;
+  }
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>;
   }
 
   return (
@@ -234,6 +300,7 @@ export function ClientsList({
         isAllSelected={isAllSelected}
         favorites={favorites}
         onToggleFavorite={toggleFavorite}
+        onRowClick={handleRowClick}
       />
 
       <ClientsPagination

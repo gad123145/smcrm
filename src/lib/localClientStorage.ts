@@ -24,12 +24,34 @@ export const LOCAL_STORAGE_KEYS = {
 
 export class LocalClientStorage {
   private getClients(): Client[] {
-    const storedData = localStorage.getItem(LOCAL_STORAGE_KEYS.CLIENTS);
-    return storedData ? JSON.parse(storedData) : [];
+    try {
+      const storedData = localStorage.getItem(LOCAL_STORAGE_KEYS.CLIENTS);
+      
+      if (!storedData) {
+        return [];
+      }
+
+      const parsedData = JSON.parse(storedData);
+      if (!Array.isArray(parsedData)) {
+        console.warn('Stored clients data is not an array');
+        return [];
+      }
+
+      return parsedData;
+    } catch (error) {
+      console.error('Error getting clients from storage:', error);
+      return [];
+    }
   }
 
   private saveClients(clients: Client[]) {
-    localStorage.setItem(LOCAL_STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
+    try {
+      console.log('Saving clients to storage:', clients); // Added for debugging
+      localStorage.setItem(LOCAL_STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
+    } catch (error) {
+      console.error('Error saving clients to storage:', error);
+      throw error;
+    }
   }
 
   async checkDuplicates(data: any[]) {
@@ -120,7 +142,37 @@ export class LocalClientStorage {
   }
 
   async getAllClients(): Promise<Client[]> {
-    return this.getClients();
+    try {
+      const clients = this.getClients();
+      
+      // Ensure all clients have proper status values and validate data
+      const validClients = clients.map(client => {
+        if (!client) return null;
+        
+        // Ensure status is valid
+        let status = (client.status || 'new').toLowerCase();
+        if (!['new', 'potential', 'interested', 'converted', 'lost'].includes(status)) {
+          status = 'new';
+        }
+        
+        return {
+          ...client,
+          id: client.id || generateId(),
+          name: client.name || '',
+          phone: client.phone || '',
+          status: status,
+          user_id: client.user_id || 'local-user',
+          created_at: client.created_at || new Date().toISOString(),
+          updated_at: client.updated_at || new Date().toISOString()
+        };
+      }).filter(Boolean) as Client[];
+
+      console.log('Total valid clients:', validClients.length);
+      return validClients;
+    } catch (error) {
+      console.error('Error in getAllClients:', error);
+      return [];
+    }
   }
 
   async getClientsByUserId(userId: string): Promise<Client[]> {
