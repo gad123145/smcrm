@@ -10,7 +10,6 @@ export const companiesTranslations = {
     addCompany: "Add Company",
     editCompany: "Edit Company",
     noCompanies: "No companies yet. Add a company to get started.",
-    projects: "Projects",
     name: "Company Name",
     logo: "Company Logo",
     submit: "Save",
@@ -19,33 +18,36 @@ export const companiesTranslations = {
     deleteSuccess: "Company deleted successfully",
     editSuccess: "Company updated successfully",
     addSuccess: "Company added successfully",
-    error: "An error occurred. Please try again.",
+    error: {
+      create: "Error creating company",
+      update: "Error updating company",
+      delete: "Error deleting company",
+      generic: "An error occurred. Please try again."
+    },
     companyName: "Company Name",
     companyDescription: "Company Description",
     enterCompanyName: "Enter company name",
     enterCompanyDescription: "Enter company description",
     saveChanges: "Save Changes",
     backToCompanies: "Back to Companies",
-    projects: {
-      title: "Projects",
-      addProject: "Add Project",
-      noProjects: "No projects found",
-      projectName: "Project Name",
-      projectDescription: "Project Description",
-    },
-    success: {
-      created: "Company created successfully",
-      updated: "Company updated successfully",
-      deleted: "Company deleted successfully",
-    },
-    error: {
-      create: "Error creating company",
-      update: "Error updating company",
-      delete: "Error deleting company",
-    },
     loading: "Loading companies...",
-    noCompanies: "No companies found",
     deleteWarning: "This action cannot be undone.",
     delete: "Delete",
+    projectsSection: {
+      title: "Projects",
+      addProject: "Add Project",
+      noProjects: "No projects yet",
+      viewAll: "View All Projects",
+      status: {
+        active: "Active",
+        completed: "Completed",
+        onHold: "On Hold"
+      }
+    },
+    messages: {
+      created: "Company created successfully",
+      updated: "Company updated successfully",
+      deleted: "Company deleted successfully"
+    }
   }
 } as const;
