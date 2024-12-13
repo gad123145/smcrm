@@ -1,12 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./i18n/config";
-import { Toaster } from "@/components/ui/toaster";
-import { useState, useEffect } from "react";
+import { Toaster } from "sonner";
+import { useState, useEffect, useCallback } from "react";
 import { AppRoutes } from "@/components/routing/AppRoutes";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { initializeRealtimeSync } from "@/lib/realtime-sync";
 import { useDataStore } from "@/stores/dataStore";
 
 function App() {
@@ -14,127 +12,78 @@ function App() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const fetchInitialData = useDataStore(state => state.fetchInitialData);
+  const reset = useDataStore(state => state.reset);
   
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
         retry: 1,
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        meta: {
-          onError: (error: any) => {
-            if (error?.message?.includes('Invalid Refresh Token')) {
-              handleAuthError();
-            }
-          },
-        }
+        staleTime: 5 * 60 * 1000,
+        cacheTime: 10 * 60 * 1000,
       }
     }
   }));
 
+  const handleAuthStateChange = useCallback(async (event: string, session: any) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      setIsAuthenticated(true);
+      setIsLoading(true);
+      try {
+        await fetchInitialData();
+      } catch (error) {
+        console.error('Error fetching initial data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+      setIsAuthenticated(false);
+      reset();
+      queryClient.clear();
+    }
+  }, [fetchInitialData, queryClient, reset]);
+
   useEffect(() => {
     let mounted = true;
-    let realtimeChannel: any = null;
 
-    const checkAuth = async () => {
+    const initialize = async () => {
       try {
-        setError(null);
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          throw sessionError;
-        }
-        
+        const { data: { session } } = await supabase.auth.getSession();
         if (mounted) {
-          const isAuthed = !!session?.user;
-          setIsAuthenticated(isAuthed);
-          
-          if (isAuthed) {
-            try {
-              // تهيئة المزامنة في الوقت الفعلي
-              realtimeChannel = initializeRealtimeSync();
-              // جلب البيانات الأولية
-              await fetchInitialData();
-            } catch (dataError) {
-              console.error('Error fetching initial data:', dataError);
-              toast.error('حدث خطأ في جلب البيانات الأولية');
-            }
-          }
-        }
-      } catch (error: any) {
-        console.error('Auth error:', error);
-        if (mounted) {
-          if (error.message === 'Auth session missing!') {
-            // تجاهل خطأ جلسة المصادقة المفقودة وتوجيه المستخدم لتسجيل الدخول
-            setIsAuthenticated(false);
+          if (session?.user) {
+            await handleAuthStateChange('SIGNED_IN', session);
           } else {
-            setError(error.message);
-            toast.error('حدث خطأ في التحقق من المصادقة');
+            setIsAuthenticated(false);
+            setIsLoading(false);
           }
         }
-      } finally {
+      } catch (error) {
+        console.error('Error initializing:', error);
         if (mounted) {
+          setError('حدث خطأ في تهيئة التطبيق');
           setIsLoading(false);
         }
       }
     };
 
-    checkAuth();
+    initialize();
 
-    // تنظيف عند إلغاء التحميل
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+
     return () => {
       mounted = false;
-      if (realtimeChannel) {
-        supabase.removeChannel(realtimeChannel);
-      }
-    };
-  }, [fetchInitialData]);
-
-  // مراقبة حالة المصادقة
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN') {
-        setIsAuthenticated(true);
-        setIsLoading(true);
-        try {
-          await fetchInitialData();
-          toast.success('تم تسجيل الدخول بنجاح');
-        } catch (error) {
-          console.error('Error fetching data:', error);
-          toast.error('حدث خطأ في جلب البيانات');
-        } finally {
-          setIsLoading(false);
-        }
-      } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-        setIsAuthenticated(false);
-        useDataStore.getState().reset();
-        queryClient.clear();
-        toast.info('تم تسجيل الخروج');
-      }
-    });
-
-    return () => {
       subscription.unsubscribe();
     };
-  }, [queryClient, fetchInitialData]);
+  }, [handleAuthStateChange]);
 
-  const handleAuthError = () => {
-    supabase.auth.signOut();
-    queryClient.clear();
-    useDataStore.getState().reset();
-    setIsAuthenticated(false);
-    toast.error('انتهت صلاحية الجلسة. الرجاء تسجيل الدخول مرة أخرى.');
-  };
-
-  if (error && !isAuthenticated) {
+  if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <div className="text-red-500 mb-4">حدث خطأ: {error}</div>
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
+        <div className="text-red-500 text-lg mb-4">{error}</div>
         <button
           onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
         >
-          إعادة المحاولة
+          إعادة تحميل التطبيق
         </button>
       </div>
     );
@@ -142,9 +91,9 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
-        <div className="ml-4 text-xl">جاري التحميل...</div>
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
+        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <div className="text-gray-600 text-lg">جاري تحميل البيانات...</div>
       </div>
     );
   }
@@ -153,7 +102,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AppRoutes isAuthenticated={isAuthenticated} />
-        <Toaster />
+        <Toaster position="top-center" />
       </TooltipProvider>
     </QueryClientProvider>
   );
