@@ -5,7 +5,7 @@ import { Download } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 import type { Project } from "@/storage/projects";
 import { ProjectSharePreview } from "./ProjectSharePreview";
 
