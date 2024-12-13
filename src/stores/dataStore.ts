@@ -14,6 +14,7 @@ interface DataState {
   setProjects: (projects: any[]) => void
   setProperties: (properties: any[]) => void
   setCompanies: (companies: any[]) => void
+  reset: () => void
 }
 
 export const useDataStore = create<DataState>((set) => ({
@@ -78,5 +79,15 @@ export const useDataStore = create<DataState>((set) => ({
   setClients: (clients) => set({ clients }),
   setProjects: (projects) => set({ projects }),
   setProperties: (properties) => set({ properties }),
-  setCompanies: (companies) => set({ companies })
+  setCompanies: (companies) => set({ companies }),
+  reset: () => {
+    set({
+      projects: [],
+      properties: [],
+      companies: [],
+      clients: [],
+      loading: false,
+      error: null
+    });
+  },
 }))

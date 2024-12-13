@@ -1,6 +1,6 @@
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { useDataStore } from '@/stores/dataStore';
+import { supabase } from "@/integrations/supabase/client";
+import { useDataStore } from "@/stores/dataStore";
+import { toast } from "sonner";
 
 const tables = [
   'projects',
@@ -13,8 +13,7 @@ const tables = [
 ];
 
 export const initializeRealtimeSync = () => {
-  const channel = supabase.channel('general_sync');
-  const dataStore = useDataStore.getState();
+  const channel = supabase.channel('db-changes');
 
   tables.forEach(table => {
     channel.on(
@@ -25,132 +24,105 @@ export const initializeRealtimeSync = () => {
         table: table
       },
       async (payload) => {
-        if (!payload) return;
-
         try {
-          // تحديث المخزن المحلي بناءً على نوع الحدث والجدول
-          if (payload.eventType === 'INSERT' && payload.new) {
+          const store = useDataStore.getState();
+          
+          if (payload.eventType === 'INSERT') {
             switch (table) {
               case 'projects':
-                dataStore.setProjects([payload.new, ...dataStore.projects]);
+                store.addProject(payload.new);
+                toast.success('تم إضافة مشروع جديد');
                 break;
               case 'properties':
-                dataStore.setProperties([payload.new, ...dataStore.properties]);
+                store.addProperty(payload.new);
+                toast.success('تم إضافة عقار جديد');
                 break;
               case 'companies':
-                dataStore.setCompanies([payload.new, ...dataStore.companies]);
+                store.addCompany(payload.new);
+                toast.success('تم إضافة شركة جديدة');
                 break;
               case 'client_actions':
-                dataStore.setClientActions([payload.new, ...dataStore.clientActions]);
+                store.addClientAction(payload.new);
+                toast.success('تم إضافة إجراء عميل جديد');
                 break;
               case 'client_insights':
-                dataStore.setClientInsights([payload.new, ...dataStore.clientInsights]);
+                store.addClientInsight(payload.new);
+                toast.success('تم إضافة رؤية عميل جديدة');
                 break;
               case 'tasks':
-                dataStore.setTasks([payload.new, ...dataStore.tasks]);
+                store.addTask(payload.new);
+                toast.success('تم إضافة مهمة جديدة');
                 break;
               case 'notifications':
-                dataStore.setNotifications([payload.new, ...dataStore.notifications]);
+                store.addNotification(payload.new);
+                toast.success('تم إضافة إشعار جديد');
                 break;
             }
-            toast.success(`تم إضافة عنصر جديد في ${table}`);
-          } 
-          else if (payload.eventType === 'UPDATE' && payload.new) {
+          } else if (payload.eventType === 'UPDATE') {
             switch (table) {
               case 'projects':
-                dataStore.setProjects(
-                  dataStore.projects.map(item => 
-                    item.id === payload.new.id ? payload.new : item
-                  )
-                );
+                store.updateProject(payload.new);
+                toast.success('تم تحديث المشروع');
                 break;
               case 'properties':
-                dataStore.setProperties(
-                  dataStore.properties.map(item => 
-                    item.id === payload.new.id ? payload.new : item
-                  )
-                );
+                store.updateProperty(payload.new);
+                toast.success('تم تحديث العقار');
                 break;
               case 'companies':
-                dataStore.setCompanies(
-                  dataStore.companies.map(item => 
-                    item.id === payload.new.id ? payload.new : item
-                  )
-                );
+                store.updateCompany(payload.new);
+                toast.success('تم تحديث الشركة');
                 break;
               case 'client_actions':
-                dataStore.setClientActions(
-                  dataStore.clientActions.map(item => 
-                    item.id === payload.new.id ? payload.new : item
-                  )
-                );
+                store.updateClientAction(payload.new);
+                toast.success('تم تحديث إجراء عميل');
                 break;
               case 'client_insights':
-                dataStore.setClientInsights(
-                  dataStore.clientInsights.map(item => 
-                    item.id === payload.new.id ? payload.new : item
-                  )
-                );
+                store.updateClientInsight(payload.new);
+                toast.success('تم تحديث رؤية عميل');
                 break;
               case 'tasks':
-                dataStore.setTasks(
-                  dataStore.tasks.map(item => 
-                    item.id === payload.new.id ? payload.new : item
-                  )
-                );
+                store.updateTask(payload.new);
+                toast.success('تم تحديث المهمة');
                 break;
               case 'notifications':
-                dataStore.setNotifications(
-                  dataStore.notifications.map(item => 
-                    item.id === payload.new.id ? payload.new : item
-                  )
-                );
+                store.updateNotification(payload.new);
+                toast.success('تم تحديث الإشعار');
                 break;
             }
-            toast.info(`تم تحديث عنصر في ${table}`);
-          } 
-          else if (payload.eventType === 'DELETE' && payload.old) {
+          } else if (payload.eventType === 'DELETE') {
             switch (table) {
               case 'projects':
-                dataStore.setProjects(
-                  dataStore.projects.filter(item => item.id !== payload.old.id)
-                );
+                store.deleteProject(payload.old.id);
+                toast.success('تم حذف المشروع');
                 break;
               case 'properties':
-                dataStore.setProperties(
-                  dataStore.properties.filter(item => item.id !== payload.old.id)
-                );
+                store.deleteProperty(payload.old.id);
+                toast.success('تم حذف العقار');
                 break;
               case 'companies':
-                dataStore.setCompanies(
-                  dataStore.companies.filter(item => item.id !== payload.old.id)
-                );
+                store.deleteCompany(payload.old.id);
+                toast.success('تم حذف الشركة');
                 break;
               case 'client_actions':
-                dataStore.setClientActions(
-                  dataStore.clientActions.filter(item => item.id !== payload.old.id)
-                );
+                store.deleteClientAction(payload.old.id);
+                toast.success('تم حذف إجراء عميل');
                 break;
               case 'client_insights':
-                dataStore.setClientInsights(
-                  dataStore.clientInsights.filter(item => item.id !== payload.old.id)
-                );
+                store.deleteClientInsight(payload.old.id);
+                toast.success('تم حذف رؤية عميل');
                 break;
               case 'tasks':
-                dataStore.setTasks(
-                  dataStore.tasks.filter(item => item.id !== payload.old.id)
-                );
+                store.deleteTask(payload.old.id);
+                toast.success('تم حذف المهمة');
                 break;
               case 'notifications':
-                dataStore.setNotifications(
-                  dataStore.notifications.filter(item => item.id !== payload.old.id)
-                );
+                store.deleteNotification(payload.old.id);
+                toast.success('تم حذف الإشعار');
                 break;
             }
-            toast.warning(`تم حذف عنصر من ${table}`);
           }
         } catch (error) {
-          console.error(`Error syncing ${table}:`, error);
+          console.error(`Error handling ${table} change:`, error);
           toast.error(`حدث خطأ في مزامنة ${table}`);
         }
       }
@@ -160,6 +132,9 @@ export const initializeRealtimeSync = () => {
   channel.subscribe((status) => {
     if (status === 'SUBSCRIBED') {
       console.log('تم الاشتراك في تحديثات الجداول بنجاح');
+    } else if (status === 'CHANNEL_ERROR') {
+      console.error('Failed to subscribe to real-time changes');
+      toast.error('فشل في الاتصال بالمزامنة في الوقت الفعلي');
     }
   });
 

@@ -2,13 +2,24 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const supabaseUrl = "https://jrxxemchkytvqqsvloso.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyeHhlbWNoa3l0dnFxc3Zsb3NvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwOTMyNjMsImV4cCI6MjA0ODY2OTI2M30.rQegO5QBiNn-NztTcvFynHZ5yxvtdIcTVDXohaRQxbg";
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    storageKey: 'clienthaven_auth',
+    storage: window.localStorage,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  },
   realtime: {
     params: {
       eventsPerSecond: 10
@@ -16,10 +27,5 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
   },
   db: {
     schema: 'public'
-  },
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true
   }
 });
