@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { supabase } from "@/integrations/supabase/client";
 import { useClientStore } from "@/data/clientsData";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { LocalClientStorage } from "@/lib/localClientStorage";
 
 export const useClientDeletion = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const removeClients = useClientStore(state => state.removeClients);
   const { t } = useTranslation();
+  const clientStorage = new LocalClientStorage();
 
   const deleteClients = async (selectedClients: string[]) => {
     if (!selectedClients.length || isDeleting) return;
@@ -15,25 +16,10 @@ export const useClientDeletion = () => {
     try {
       setIsDeleting(true);
       
-      const maxRetries = 3;
-      let retryCount = 0;
-      let success = false;
-
-      while (retryCount < maxRetries && !success) {
-        try {
-          const { error } = await supabase
-            .from('clients')
-            .delete()
-            .in('id', selectedClients);
-
-          if (error) throw error;
-          success = true;
-        } catch (err) {
-          retryCount++;
-          if (retryCount === maxRetries) throw err;
-          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-        }
-      }
+      const userId = 'local-user';
+      await Promise.all(selectedClients.map(clientId => 
+        clientStorage.deleteClient(clientId, userId)
+      ));
 
       removeClients(selectedClients);
       toast.success(t('clients.deleteSuccess'));

@@ -2,36 +2,38 @@ import { useTranslation } from "react-i18next";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { utils, writeFile } from "xlsx";
 import { AssignClientsDialog } from "./clients/AssignClientsDialog";
-import { supabase } from "@/integrations/supabase/client";
 import { ClientsListHeader } from "./clients/list/ClientsListHeader";
 import { ClientsListTable } from "./clients/list/ClientsListTable";
 import { ClientsPagination } from "./clients/list/ClientsPagination";
 import type { RowsPerPage } from "./clients/ClientsRowsPerPage";
 import { cn } from "@/lib/utils";
-import { useClientData } from "@/hooks/useClientData";
 import { useClientDeletion } from "./clients/list/ClientsDeleteHandler";
 import { toast } from "sonner";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClientsFilters } from "./clients/list/ClientsFilters";
+import { LocalClientStorage } from "@/lib/localClientStorage";
 
 interface ClientsListProps {
   status: string;
   searchQuery?: string;
   showFavorites?: boolean;
   selectedUser?: string | null;
+  refreshTrigger?: number;
+  onImportComplete?: () => void;
 }
 
 export function ClientsList({ 
   status, 
   searchQuery: externalSearchQuery = "", 
   showFavorites: externalShowFavorites = false,
-  selectedUser: externalSelectedUser = null 
+  selectedUser: externalSelectedUser = null,
+  refreshTrigger = 0,
+  onImportComplete
 }: ClientsListProps) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>("admin"); // Default to admin for local storage version
   const { deleteClients } = useClientDeletion();
-  const queryClient = useQueryClient();
+  const clientStorage = new LocalClientStorage();
   
   const [rowsPerPage, setRowsPerPage] = useState<RowsPerPage>(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -40,30 +42,26 @@ export function ClientsList({
   const [searchQuery, setSearchQuery] = useState(externalSearchQuery);
   const [selectedUser, setSelectedUser] = useState<string | null>(externalSelectedUser);
   const [showFavorites, setShowFavorites] = useState(externalShowFavorites);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [error, setError] = useState<Error | null>(null);
 
-  const { data: favorites = [] } = useQuery({
-    queryKey: ['favorites'],
-    queryFn: async () => {
+  // Load clients from local storage
+  useEffect(() => {
+    const loadClients = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return [];
-
-        const { data, error } = await supabase
-          .from('client_favorites')
-          .select('client_id')
-          .eq('user_id', user.id);
-        
-        if (error) {
-          console.error('Error fetching favorites:', error);
-          return [];
-        }
-        return data?.map(f => f.client_id) || [];
-      } catch (error) {
-        console.error('Error in favorites query:', error);
-        return [];
+        const userId = 'local-user'; // Using a default user ID for local storage
+        const allClients = await clientStorage.getClients(userId);
+        const filteredClients = allClients.filter(client => client.status === status);
+        setClients(filteredClients);
+      } catch (err: any) {
+        console.error('Error loading clients:', err);
+        setError(err);
       }
-    }
-  });
+    };
+
+    loadClients();
+  }, [status, refreshTrigger]);
 
   // Update internal state when external props change
   useEffect(() => {
@@ -80,25 +78,17 @@ export function ClientsList({
 
   const toggleFavorite = async (clientId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
+      const userId = 'local-user';
       if (favorites.includes(clientId)) {
-        await supabase
-          .from('client_favorites')
-          .delete()
-          .eq('client_id', clientId)
-          .eq('user_id', user.id);
+        const newFavorites = favorites.filter(id => id !== clientId);
+        setFavorites(newFavorites);
+        localStorage.setItem(`favorites_${userId}`, JSON.stringify(newFavorites));
       } else {
-        await supabase
-          .from('client_favorites')
-          .insert({
-            client_id: clientId,
-            user_id: user.id
-          });
+        const newFavorites = [...favorites, clientId];
+        setFavorites(newFavorites);
+        localStorage.setItem(`favorites_${userId}`, JSON.stringify(newFavorites));
       }
       
-      queryClient.invalidateQueries({ queryKey: ['favorites'] });
       toast.success(t(favorites.includes(clientId) ? 'clients.removedFromFavorites' : 'clients.addedToFavorites'));
     } catch (error) {
       console.error('Error toggling favorite:', error);
@@ -106,34 +96,14 @@ export function ClientsList({
     }
   };
 
+  // Load favorites from local storage
   useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError) throw authError;
-        
-        if (user) {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-          
-          if (profileError) throw profileError;
-          
-          if (profile) {
-            setUserRole(profile.role);
-          }
-        }
-      } catch (err: any) {
-        console.error('Error fetching user role:', err);
-      }
-    };
-
-    fetchUserRole();
+    const userId = 'local-user';
+    const storedFavorites = localStorage.getItem(`favorites_${userId}`);
+    if (storedFavorites) {
+      setFavorites(JSON.parse(storedFavorites));
+    }
   }, []);
-
-  const { clients, error } = useClientData(status, userRole);
 
   // Filter clients based on search query, favorites, and selected user
   const filteredClients = useMemo(() => {

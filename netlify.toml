@@ -1,11 +1,17 @@
 [build]
   command = "npm install --legacy-peer-deps && npm run build"
   publish = "dist"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20.11.0"
   NPM_FLAGS = "--legacy-peer-deps"
   CI = "true"
+
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
 
 [[redirects]]
   from = "/*"

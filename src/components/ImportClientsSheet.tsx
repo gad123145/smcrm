@@ -6,23 +6,21 @@ import { FileUp } from "lucide-react";
 import { useState } from "react";
 import { FileDropZone } from "./import/FileDropZone";
 import { FieldMapping } from "./import/FieldMapping";
-import { ImportLogic } from "./import/ImportLogic";
+import { LocalClientStorage } from "@/lib/localClientStorage";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ImportClientsSheetProps {
   children?: React.ReactNode;
+  onImportComplete?: () => void;
 }
 
-export function ImportClientsSheet({ children }: ImportClientsSheetProps) {
+export function ImportClientsSheet({ children, onImportComplete }: ImportClientsSheetProps) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const importLogic = new ImportLogic();
-  const queryClient = useQueryClient();
+  const clientStorage = new LocalClientStorage();
 
   const handleFileSelect = (selectedFile: File) => {
     console.log('File selected:', selectedFile.name);
@@ -32,15 +30,12 @@ export function ImportClientsSheet({ children }: ImportClientsSheetProps) {
   const handleDataMapped = async (mappedData: any[]) => {
     try {
       console.log('Starting import with mapped data:', mappedData);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error(t('errors.unauthorized'));
-        return;
-      }
+      
+      // Generate a mock user ID if not using authentication
+      const userId = 'local-user';
 
-      const result = await importLogic.importClients(mappedData, user.id);
+      const result = await clientStorage.importClients(mappedData, userId);
       console.log('Import result:', result);
-      await queryClient.invalidateQueries({ queryKey: ['clients'] });
 
       if (result.duplicates > 0) {
         // First show duplicates message
@@ -74,6 +69,7 @@ export function ImportClientsSheet({ children }: ImportClientsSheetProps) {
       
       setOpen(false);
       setFile(null);
+      onImportComplete?.();
     } catch (error: any) {
       console.error('Error importing clients:', error);
       toast.error(error.message || t('errors.importFailed'));
@@ -100,16 +96,18 @@ export function ImportClientsSheet({ children }: ImportClientsSheetProps) {
           </Button>
         )}
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-xl">
+      <SheetContent side={isRTL ? "right" : "left"} className="w-full max-w-xl">
         <SheetHeader>
           <SheetTitle>{t("clients.importClients.title")}</SheetTitle>
         </SheetHeader>
-        <ScrollArea className="h-[calc(100vh-10rem)] mt-6 pr-4">
-          {!file ? (
-            <FileDropZone onFileSelect={handleFileSelect} />
-          ) : (
-            <FieldMapping file={file} onDataMapped={handleDataMapped} />
-          )}
+        <ScrollArea className="h-full">
+          <div className="space-y-6 py-6">
+            {!file ? (
+              <FileDropZone onFileSelect={handleFileSelect} />
+            ) : (
+              <FieldMapping file={file} onDataMapped={handleDataMapped} />
+            )}
+          </div>
         </ScrollArea>
       </SheetContent>
     </Sheet>

@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { SupabaseSyncManager } from "@/components/sync/SupabaseSyncManager";
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -104,7 +105,10 @@ export function DashboardLayout({ children, sidebarOpen, setSidebarOpen }: Dashb
         "pt-14 min-h-[calc(100vh-3.5rem)] flex",
         isRTL ? "flex-row-reverse" : "flex-row"
       )}>
-        {children}
+        <div className="flex items-center gap-4">
+          <SupabaseSyncManager />
+          {children}
+        </div>
       </div>
     </div>
   );
