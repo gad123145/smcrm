@@ -1,11 +1,11 @@
 [build]
-  command = "npm install --platform=linux --arch=x64 @rollup/rollup-linux-x64-gnu && npm run build"
+  command = "npm install && npm run build"
   publish = "dist"
   ignore = "git diff --quiet HEAD^ HEAD ./src"
 
 [build.environment]
   NODE_VERSION = "18"
-  NPM_FLAGS = "--legacy-peer-deps"
+  NPM_FLAGS = "--legacy-peer-deps --platform=linux --arch=x64"
   CI = "false"
 
 [[redirects]]
@@ -19,10 +19,3 @@
 [build.processing.css]
   bundle = true
   minify = true
-
-[build.processing.js]
-  bundle = true
-  minify = true
-
-[build.processing.images]
-  compress = true
