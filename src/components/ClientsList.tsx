@@ -2,40 +2,36 @@ import { useTranslation } from "react-i18next";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { utils, writeFile } from "xlsx";
 import { AssignClientsDialog } from "./clients/AssignClientsDialog";
+import { supabase } from "@/integrations/supabase/client";
 import { ClientsListHeader } from "./clients/list/ClientsListHeader";
 import { ClientsListTable } from "./clients/list/ClientsListTable";
 import { ClientsPagination } from "./clients/list/ClientsPagination";
 import type { RowsPerPage } from "./clients/ClientsRowsPerPage";
 import { cn } from "@/lib/utils";
+import { useClientData } from "@/hooks/useClientData";
 import { useClientDeletion } from "./clients/list/ClientsDeleteHandler";
 import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClientsFilters } from "./clients/list/ClientsFilters";
-import { LocalClientStorage } from "@/lib/localClientStorage";
 
 interface ClientsListProps {
   status: string;
   searchQuery?: string;
   showFavorites?: boolean;
   selectedUser?: string | null;
-  refreshTrigger?: number;
-  onImportComplete?: () => void;
-  onClientClick?: (client: any) => void;
 }
 
 export function ClientsList({ 
   status, 
   searchQuery: externalSearchQuery = "", 
   showFavorites: externalShowFavorites = false,
-  selectedUser: externalSelectedUser = null,
-  refreshTrigger = 0,
-  onImportComplete,
-  onClientClick
+  selectedUser: externalSelectedUser = null 
 }: ClientsListProps) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
-  const [userRole, setUserRole] = useState<string>("admin"); // Default to admin for local storage version
+  const [userRole, setUserRole] = useState<string | null>(null);
   const { deleteClients } = useClientDeletion();
-  const clientStorage = new LocalClientStorage();
+  const queryClient = useQueryClient();
   
   const [rowsPerPage, setRowsPerPage] = useState<RowsPerPage>(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,70 +40,30 @@ export function ClientsList({
   const [searchQuery, setSearchQuery] = useState(externalSearchQuery);
   const [selectedUser, setSelectedUser] = useState<string | null>(externalSelectedUser);
   const [showFavorites, setShowFavorites] = useState(externalShowFavorites);
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [clients, setClients] = useState<any[]>([]);
-  const [error, setError] = useState<Error | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Load clients from local storage
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadClients = async () => {
+  const { data: favorites = [] } = useQuery({
+    queryKey: ['favorites'],
+    queryFn: async () => {
       try {
-        if (!clientStorage) return;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
+
+        const { data, error } = await supabase
+          .from('client_favorites')
+          .select('client_id')
+          .eq('user_id', user.id);
         
-        const allClients = await clientStorage.getAllClients();
-        if (!isMounted) return;
-
-        console.log('Current status:', status);
-        const filteredClients = allClients.filter(client => {
-          // For "all" status, show all clients
-          if (status === "all") return true;
-          
-          // Otherwise filter by status
-          if (!client || !client.status) return false;
-          return client.status.toLowerCase() === status.toLowerCase();
-        });
-
-        if (!isMounted) return;
-        console.log('Filtered clients:', filteredClients);
-        setClients(filteredClients);
-      } catch (err: any) {
-        console.error('Error loading clients:', err);
-        if (isMounted) {
-          setError(err);
+        if (error) {
+          console.error('Error fetching favorites:', error);
+          return [];
         }
+        return data?.map(f => f.client_id) || [];
+      } catch (error) {
+        console.error('Error in favorites query:', error);
+        return [];
       }
-    };
-
-    loadClients();
-    return () => {
-      isMounted = false;
-    };
-  }, [status, refreshTrigger, clientStorage]);
-
-  // Remove postMessage error
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const allowedOrigins = [
-        window.location.origin,
-        'http://localhost:3000',
-        'http://192.168.1.110:5173'
-      ];
-      
-      if (!allowedOrigins.includes(event.origin)) {
-        console.log('Ignored message from untrusted origin:', event.origin);
-        return;
-      }
-
-      // Handle the message here
-      console.log('Received message from trusted origin:', event.origin);
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
+    }
+  });
 
   // Update internal state when external props change
   useEffect(() => {
@@ -124,17 +80,25 @@ export function ClientsList({
 
   const toggleFavorite = async (clientId: string) => {
     try {
-      const userId = 'local-user';
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       if (favorites.includes(clientId)) {
-        const newFavorites = favorites.filter(id => id !== clientId);
-        setFavorites(newFavorites);
-        localStorage.setItem(`favorites_${userId}`, JSON.stringify(newFavorites));
+        await supabase
+          .from('client_favorites')
+          .delete()
+          .eq('client_id', clientId)
+          .eq('user_id', user.id);
       } else {
-        const newFavorites = [...favorites, clientId];
-        setFavorites(newFavorites);
-        localStorage.setItem(`favorites_${userId}`, JSON.stringify(newFavorites));
+        await supabase
+          .from('client_favorites')
+          .insert({
+            client_id: clientId,
+            user_id: user.id
+          });
       }
       
+      queryClient.invalidateQueries({ queryKey: ['favorites'] });
       toast.success(t(favorites.includes(clientId) ? 'clients.removedFromFavorites' : 'clients.addedToFavorites'));
     } catch (error) {
       console.error('Error toggling favorite:', error);
@@ -142,14 +106,34 @@ export function ClientsList({
     }
   };
 
-  // Load favorites from local storage
   useEffect(() => {
-    const userId = 'local-user';
-    const storedFavorites = localStorage.getItem(`favorites_${userId}`);
-    if (storedFavorites) {
-      setFavorites(JSON.parse(storedFavorites));
-    }
+    const fetchUserRole = async () => {
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError) throw authError;
+        
+        if (user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          
+          if (profileError) throw profileError;
+          
+          if (profile) {
+            setUserRole(profile.role);
+          }
+        }
+      } catch (err: any) {
+        console.error('Error fetching user role:', err);
+      }
+    };
+
+    fetchUserRole();
   }, []);
+
+  const { clients, error } = useClientData(status, userRole);
 
   // Filter clients based on search query, favorites, and selected user
   const filteredClients = useMemo(() => {
@@ -224,24 +208,6 @@ export function ClientsList({
     }
   };
 
-  const handleRowClick = useCallback((client: any) => {
-    try {
-      // Add loading state
-      setIsLoading(true);
-      
-      // Process click after a small delay to prevent UI freeze
-      setTimeout(() => {
-        if (onClientClick) {
-          onClientClick(client);
-        }
-        setIsLoading(false);
-      }, 0);
-    } catch (error) {
-      console.error('Error handling row click:', error);
-      setIsLoading(false);
-    }
-  }, [onClientClick]);
-
   const totalPages = Math.ceil(filteredClients.length / rowsPerPage);
 
   const isAllSelected = useMemo(() => 
@@ -255,13 +221,11 @@ export function ClientsList({
   };
 
   if (error) {
-    return <div className="text-red-500">Error: {error.message}</div>;
-  }
-
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-64">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    </div>;
+    return (
+      <div className="text-center py-8 text-red-500">
+        {t("errors.loadingClients")}
+      </div>
+    );
   }
 
   return (
@@ -300,7 +264,6 @@ export function ClientsList({
         isAllSelected={isAllSelected}
         favorites={favorites}
         onToggleFavorite={toggleFavorite}
-        onRowClick={handleRowClick}
       />
 
       <ClientsPagination

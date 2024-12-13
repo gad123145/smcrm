@@ -3,9 +3,10 @@ import { useTranslation } from "react-i18next";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { DashboardSidebar } from "@/components/layouts/DashboardSidebar";
 import { ClientsList } from "@/components/ClientsList";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { formSchema } from "@/components/forms/formSchema";
 import { z } from "zod";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { cn } from "@/lib/utils";
 
 const Clients = () => {
@@ -16,21 +17,9 @@ const Clients = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFavorites, setShowFavorites] = useState(false);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const handleImportComplete = () => {
-    setRefreshTrigger(prev => prev + 1);
-  };
-
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) {
-        return;
-      }
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  // Enable realtime subscription for clients table
+  useRealtimeSubscription('clients', ['clients']);
 
   return (
     <DashboardLayout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
@@ -50,8 +39,6 @@ const Clients = () => {
               searchQuery={searchQuery}
               showFavorites={showFavorites}
               selectedUser={selectedUser}
-              refreshTrigger={refreshTrigger}
-              onImportComplete={handleImportComplete}
             />
           </div>
         </main>

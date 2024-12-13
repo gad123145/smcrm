@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { LocalClientStorage } from "@/lib/localClientStorage";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AssignClientsDialogProps {
   open: boolean;
@@ -36,16 +36,27 @@ export function AssignClientsDialog({
   const [users, setUsers] = useState<Array<{ id: string; full_name: string; status: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const isRTL = i18n.language === 'ar';
-  const clientStorage = new LocalClientStorage();
 
-  // Mock users for local storage version
+  // Fetch all users when dialog opens
+  const fetchUsers = async () => {
+    console.log("Fetching users...");
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, status');
+
+    if (error) {
+      console.error('Error fetching users:', error);
+      toast.error(t("errors.fetchUsers"));
+      return;
+    }
+
+    console.log("Fetched users:", profiles);
+    setUsers(profiles || []);
+  };
+
   useEffect(() => {
     if (open) {
-      setUsers([
-        { id: 'user1', full_name: 'John Doe', status: 'active' },
-        { id: 'user2', full_name: 'Jane Smith', status: 'active' },
-        { id: 'user3', full_name: 'Bob Johnson', status: 'inactive' }
-      ]);
+      fetchUsers();
     }
   }, [open]);
 
@@ -56,24 +67,21 @@ export function AssignClientsDialog({
     }
 
     setIsLoading(true);
-    try {
-      const userId = 'local-user';
-      await Promise.all(clientIds.map(async (clientId) => {
-        const client = await clientStorage.getClient(clientId, userId);
-        if (client) {
-          client.assigned_to = selectedUser;
-          await clientStorage.updateClient(clientId, client, userId);
-        }
-      }));
+    const { error } = await supabase
+      .from('clients')
+      .update({ assigned_to: selectedUser })
+      .in('id', clientIds);
 
-      toast.success(t("success.clientsAssigned"));
-      onSuccess();
-    } catch (error) {
+    setIsLoading(false);
+
+    if (error) {
       console.error('Error assigning clients:', error);
       toast.error(t("errors.assignClients"));
-    } finally {
-      setIsLoading(false);
+      return;
     }
+
+    toast.success(t("success.clientsAssigned"));
+    onSuccess();
   };
 
   return (

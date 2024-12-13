@@ -22,9 +22,6 @@ import ClientManagement from "@/pages/guides/ClientManagement";
 import ProjectManagement from "@/pages/guides/ProjectManagement";
 import CompanyProjects from "@/pages/CompanyProjects";
 import EditCompany from "@/pages/EditCompany";
-import PropertyDetails from "@/pages/PropertyDetails";
-import EditProperty from "@/pages/EditProperty";
-import AddProperty from "@/pages/AddProperty";
 
 export function AuthenticatedRoutes() {
   return (
@@ -37,9 +34,6 @@ export function AuthenticatedRoutes() {
         <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
         <Route path="/projects/:id/edit" element={<ProtectedRoute><EditProject /></ProtectedRoute>} />
         <Route path="/properties" element={<ProtectedRoute><Properties /></ProtectedRoute>} />
-        <Route path="/properties/:id" element={<ProtectedRoute><PropertyDetails /></ProtectedRoute>} />
-        <Route path="/properties/:id/edit" element={<ProtectedRoute><EditProperty /></ProtectedRoute>} />
-        <Route path="/properties/add" element={<ProtectedRoute><AddProperty /></ProtectedRoute>} />
         <Route path="/companies" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
         <Route path="/companies/:id" element={<ProtectedRoute><CompanyDetails /></ProtectedRoute>} />
         <Route path="/companies/:id/edit" element={<ProtectedRoute><EditCompany /></ProtectedRoute>} />

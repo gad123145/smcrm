@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { ClientsTableHeader } from "../ClientsTableHeader";
 import { ClientsTableRow } from "../ClientsTableRow";
@@ -12,8 +11,6 @@ export interface ClientsListTableProps {
   isAllSelected: boolean;
   favorites: string[];
   onToggleFavorite: (id: string) => Promise<void>;
-  onRowClick?: (client: Client) => void;
-  isLoading?: boolean;
 }
 
 export function ClientsListTable({
@@ -24,25 +21,7 @@ export function ClientsListTable({
   isAllSelected,
   favorites,
   onToggleFavorite,
-  onRowClick,
-  isLoading,
 }: ClientsListTableProps) {
-  const handleRowClick = useCallback((client: Client) => {
-    if (!isLoading && onRowClick) {
-      onRowClick(client);
-    }
-  }, [isLoading, onRowClick]);
-
-  const handleCheckboxClick = useCallback((e: React.MouseEvent, clientId: string) => {
-    e.stopPropagation(); // Prevent row click
-    onSelectClient(clientId);
-  }, [onSelectClient]);
-
-  const handleFavoriteClick = useCallback((e: React.MouseEvent, clientId: string) => {
-    e.stopPropagation(); // Prevent row click
-    onToggleFavorite(clientId);
-  }, [onToggleFavorite]);
-
   return (
     <Table>
       <ClientsTableHeader
@@ -58,9 +37,6 @@ export function ClientsListTable({
             onSelect={onSelectClient}
             isFavorite={favorites.includes(client.id)}
             onToggleFavorite={onToggleFavorite}
-            onClick={() => handleRowClick(client)}
-            onCheckboxClick={(e) => handleCheckboxClick(e, client.id)}
-            onFavoriteClick={(e) => handleFavoriteClick(e, client.id)}
           />
         ))}
       </TableBody>

@@ -1,24 +1,41 @@
 import { z } from "zod";
 
 export const propertySchema = z.object({
-  id: z.string(),
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  type: z.string().min(1, "Type is required"),
-  price: z.number().min(0, "Price must be positive"),
-  area: z.number().min(0, "Area must be positive"),
-  location: z.string().min(1, "Location is required"),
-  city: z.string().min(1, "City is required"),
-  features: z.array(z.string()).default([]),
-  images: z.array(z.string()).default([]),
-  ownerName: z.string().min(1, "Owner name is required"),
-  ownerPhone: z.string().min(1, "Owner phone is required"),
-  status: z.enum(["available", "sold", "rented", "underContract"]).default("available"),
-  hasBasement: z.boolean().default(false),
-  otherDetails: z.string().optional(),
-  created_at: z.string().optional(),
-  updated_at: z.string().optional(),
-  user_id: z.string().optional(),
+  id: z.string().optional(),
+  title: z.string().min(2, { 
+    message: "يجب أن يكون اسم المشروع أكثر من حرفين" 
+  }),
+  ownerName: z.string().min(2, {
+    message: "يجب إدخال اسم المالك"
+  }),
+  engineeringConsultant: z.string().min(2, {
+    message: "يجب إدخال اسم الاستشاري الهندسي"
+  }),
+  operatingCompany: z.string().min(2, {
+    message: "يجب إدخال اسم شركة الإدارة والتشغيل"
+  }),
+  description: z.string().min(10, {
+    message: "يجب أن يكون الوصف أكثر من 10 أحرف"
+  }),
+  projectSections: z.string().optional(),
+  deliveryDate: z.string().optional(),
+  availableUnits: z.string().optional(),
+  pricePerMeterFrom: z.string().optional(),
+  pricePerMeterTo: z.string().optional(),
+  unitPriceFrom: z.string().optional(),
+  unitPriceTo: z.string().optional(),
+  minArea: z.string().optional(),
+  rentalSystem: z.string().optional(),
+  images: z.array(z.string()).optional(),
+  files: z.array(z.instanceof(File)).optional(),
+  types: z.array(z.string()).default([]),
+  type: z.string().optional(),
+  address: z.string().optional(),
+  location: z.string().optional(),
+  area: z.string().optional(),
+  price: z.string().optional(),
+  ownerPhone: z.string().optional(),
+  developerId: z.string().optional(),
 });
 
 export type Property = z.infer<typeof propertySchema>;

@@ -1,179 +1,263 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { DashboardSidebar } from "@/components/layouts/DashboardSidebar";
-import { DashboardContent } from "@/components/layouts/DashboardContent";
-import { useSidebar } from "@/components/ui/sidebar";
+import { PropertyForm } from "@/components/forms/PropertyForm";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { toast } from "sonner";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useToast } from "@/components/ui/use-toast";
+import { Property } from "@/components/forms/propertySchema";
+import { PropertyCard } from "@/components/properties/PropertyCard";
+import { cn } from "@/lib/utils";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
+import { supabase } from "@/integrations/supabase/client";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface Property {
-  id: string;
-  title: string;
-  description: string;
-  type: string;
-  price: number;
-  area: number;
-  location: string;
-  city: string;
-  status?: string;
-}
-
-export default function Properties() {
+const Properties = () => {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const { open, setOpen } = useSidebar();
+  const { toast } = useToast();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const isRTL = i18n.language === 'ar';
 
-  const [properties, setProperties] = useState<Property[]>(() => {
-    try {
-      const stored = localStorage.getItem('properties');
-      return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-      console.error('Error loading properties:', error);
-      return [];
-    }
-  });
+  useRealtimeSubscription('properties', ['properties']);
 
-  const handleDelete = (id: string) => {
-    if (window.confirm(t('properties.messages.deleteConfirm'))) {
-      try {
-        const newProperties = properties.filter(p => p.id !== id);
-        localStorage.setItem('properties', JSON.stringify(newProperties));
-        setProperties(newProperties);
-        toast.success(t('properties.messages.deleteSuccess'));
-      } catch (error) {
-        console.error('Error deleting property:', error);
-        toast.error(t('properties.messages.deleteError'));
+  // Fetch properties when component mounts
+  useEffect(() => {
+    fetchProperties();
+  }, []);
+
+  const fetchProperties = async () => {
+    try {
+      setIsLoading(true);
+      const { data: propertiesData, error } = await supabase
+        .from('properties')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setProperties(propertiesData || []);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+      toast({
+        title: isRTL ? 'حدث خطأ أثناء تحميل العقارات' : 'Error loading properties',
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddProperty = async (data: Property) => {
+    try {
+      const user = await supabase.auth.getUser();
+      if (!user.data.user) {
+        toast({
+          title: t("errors.unauthorized"),
+          variant: "destructive",
+        });
+        return;
       }
+
+      let uploadedImageUrls: string[] = [];
+      if (data.images && data.images.length > 0) {
+        for (const imageUrl of data.images) {
+          if (typeof imageUrl === 'string' && imageUrl.startsWith('blob:')) {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
+            
+            const fileName = `${Math.random()}.jpg`;
+            const { error: uploadError, data: uploadData } = await supabase.storage
+              .from('projects')
+              .upload(fileName, file);
+
+            if (uploadError) {
+              console.error('Error uploading image:', uploadError);
+              continue;
+            }
+
+            if (uploadData) {
+              const { data: { publicUrl } } = supabase.storage
+                .from('projects')
+                .getPublicUrl(uploadData.path);
+              uploadedImageUrls.push(publicUrl);
+            }
+          } else {
+            uploadedImageUrls.push(imageUrl);
+          }
+        }
+      }
+
+      const { error } = await supabase.from('properties').insert({
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        area: data.area,
+        location: data.location,
+        price: data.price,
+        owner_phone: data.ownerPhone,
+        operating_company: data.operatingCompany,
+        project_sections: data.projectSections,
+        images: uploadedImageUrls,
+        user_id: user.data.user.id
+      });
+
+      if (error) throw error;
+
+      await fetchProperties(); // Refresh the properties list
+      toast({
+        title: isRTL ? 'تم إضافة العقار بنجاح' : 'Property added successfully',
+      });
+    } catch (error) {
+      console.error('Error adding property:', error);
+      toast({
+        title: isRTL ? 'حدث خطأ أثناء إضافة العقار' : 'Error adding property',
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditProperty = async (data: Property) => {
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update({
+          title: data.title,
+          description: data.description,
+          type: data.type,
+          area: data.area,
+          location: data.location,
+          price: data.price,
+          owner_phone: data.ownerPhone,
+          operating_company: data.operatingCompany,
+          project_sections: data.projectSections,
+          images: data.images,
+        })
+        .eq('id', data.id);
+
+      if (error) throw error;
+
+      await fetchProperties(); // Refresh the properties list
+      toast({
+        title: isRTL ? 'تم تحديث العقار بنجاح' : 'Property updated successfully',
+      });
+    } catch (error) {
+      console.error('Error updating property:', error);
+      toast({
+        title: isRTL ? 'حدث خطأ أثناء تحديث العقار' : 'Error updating property',
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteProperty = async (property: Property) => {
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', property.id);
+
+      if (error) throw error;
+
+      await fetchProperties(); // Refresh the properties list
+      toast({
+        title: isRTL ? 'تم حذف العقار بنجاح' : 'Property deleted successfully',
+      });
+    } catch (error) {
+      console.error('Error deleting property:', error);
+      toast({
+        title: isRTL ? 'حدث خطأ أثناء حذف العقار' : 'Error deleting property',
+        variant: "destructive",
+      });
     }
   };
 
   return (
-    <div className="relative flex min-h-screen">
-      <DashboardSidebar open={open} setOpen={setOpen}>
-        <div className="space-y-4 py-4">
-          <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
-              {t('properties.menu.overview')}
-            </h2>
-            <div className="space-y-1">
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => navigate('/properties')}
-              >
-                {t('properties.menu.all')}
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => navigate('/properties/residential')}
-              >
-                {t('properties.menu.residential')}
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => navigate('/properties/commercial')}
-              >
-                {t('properties.menu.commercial')}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </DashboardSidebar>
-
-      <DashboardLayout sidebarOpen={open} setSidebarOpen={setOpen}>
-        <DashboardContent>
-          <div className="flex-1 space-y-4 p-8 pt-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-bold tracking-tight">{t('properties.title')}</h2>
-              <div className="flex items-center space-x-2">
-                <Button onClick={() => navigate('/properties/add')}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('properties.addProperty')}
+    <DashboardLayout sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}>
+      <div className="flex min-h-screen bg-background">
+        <DashboardSidebar open={sidebarOpen} />
+        <main className={cn(
+          "flex-1 p-6 transition-all duration-300 ease-in-out",
+          sidebarOpen ? (isRTL ? "mr-64" : "ml-64") : "m-0"
+        )}>
+          <div className={cn(
+            "flex justify-between items-center mb-6",
+            isRTL ? "flex-row-reverse" : "flex-row"
+          )}>
+            <h1 className={cn(
+              "text-2xl font-semibold",
+              isRTL ? "font-cairo" : ""
+            )}>{t("properties.title")}</h1>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button className={cn(
+                  "gap-2",
+                  isRTL ? "flex-row-reverse" : ""
+                )}>
+                  <Plus className="w-4 h-4" />
+                  {t("properties.addProperty")}
                 </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {properties.length === 0 ? (
-                <div className="col-span-full text-center py-8 text-muted-foreground">
-                  {t('properties.messages.noProperties')}
+              </SheetTrigger>
+              <SheetContent 
+                side={isRTL ? "right" : "left"} 
+                className={cn(
+                  "w-full sm:max-w-2xl overflow-y-auto",
+                  isRTL ? "font-cairo" : ""
+                )}
+              >
+                <SheetHeader>
+                  <SheetTitle className={cn(
+                    isRTL ? "text-right font-cairo" : ""
+                  )}>
+                    {t("properties.addProperty")}
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="mt-6">
+                  <PropertyForm
+                    onSubmit={handleAddProperty}
+                    onCancel={() => {
+                      const sheet = document.querySelector('[data-state="open"]');
+                      if (sheet) {
+                        const closeButton = sheet.querySelector('button[aria-label="Close"]');
+                        if (closeButton) {
+                          (closeButton as HTMLButtonElement).click();
+                        }
+                      }
+                    }}
+                  />
                 </div>
-              ) : (
-                properties.map((property) => (
-                  <Card 
-                    key={property.id}
-                    className="cursor-pointer hover:shadow-lg transition-all"
-                    onClick={() => navigate(`/properties/${property.id}`)}
-                  >
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold">{property.title}</h3>
-                        <div className="space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/properties/${property.id}/edit`);
-                            }}
-                          >
-                            {t('properties.actions.edit')}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(property.id);
-                            }}
-                          >
-                            {t('properties.actions.delete')}
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">
-                            {t('properties.form.type')}
-                          </span>
-                          <span>{property.type}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">
-                            {t('properties.form.price')}
-                          </span>
-                          <span>${property.price.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">
-                            {t('properties.form.location')}
-                          </span>
-                          <span>{property.location}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">
-                            {t('properties.form.area')}
-                          </span>
-                          <span>{property.area} m²</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
+              </SheetContent>
+            </Sheet>
           </div>
-        </DashboardContent>
-      </DashboardLayout>
-    </div>
+          
+          <ScrollArea className="h-[calc(100vh-10rem)]">
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, index) => (
+                  <div key={index} className="h-[300px] rounded-lg bg-gray-100 animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {properties.map((property) => (
+                  <PropertyCard
+                    key={property.id}
+                    property={property}
+                    onEdit={handleEditProperty}
+                    onDelete={handleDeleteProperty}
+                  />
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </main>
+      </div>
+    </DashboardLayout>
   );
-}
+};
+
+export default Properties;

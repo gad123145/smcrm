@@ -1,131 +1,139 @@
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Share2, Download } from "lucide-react";
-import { Property } from "@/types/property";
+import { Eye, Pencil, Trash2, Download, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ShareButton } from "@/components/properties/ShareButton";
-import { downloadAsExcel } from "@/lib/excel";
+import { Property } from "@/components/forms/propertySchema";
+import { PropertyViewDialog } from "./PropertyViewDialog";
+import { PropertyEditSheet } from "./PropertyEditSheet";
+import { ProjectShareDialog } from "../projects/details/ProjectShareDialog";
+import { useProjectMutations } from "@/hooks/useProjectMutations";
+import { toast } from "sonner";
+import { useState } from "react";
 
-interface PropertyCardProps {
+type PropertyCardProps = {
   property: Property;
-  onDelete?: (property: Property) => void;
-  onEdit?: (property: Property) => void;
-  onClick?: () => void;
-  className?: string;
-}
+  onEdit: (data: Property) => void;
+  onDelete: (property: Property) => void;
+};
 
-export const PropertyCard = ({
-  property,
-  onDelete,
-  onEdit,
-  onClick,
-  className,
-}: PropertyCardProps) => {
+export function PropertyCard({ property, onEdit, onDelete }: PropertyCardProps) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
+  const { deleteProject } = useProjectMutations();
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
-  const handleDownload = () => {
-    const data = [
-      {
-        [t('properties.form.title')]: property.title,
-        [t('properties.form.type')]: property.type,
-        [t('properties.form.price')]: property.price,
-        [t('properties.form.area')]: property.area,
-        [t('properties.form.location')]: property.location,
-        [t('properties.form.description')]: property.description,
-      },
-    ];
+  // Convert Property to Project type for sharing
+  const projectData = {
+    id: "",
+    name: property.title,
+    description: property.description,
+    location: property.location,
+    operating_company: property.operatingCompany,
+    price: `${property.pricePerMeterFrom} - ${property.pricePerMeterTo}`,
+    available_units: property.availableUnits,
+    images: property.images?.map(img => typeof img === 'string' ? img : URL.createObjectURL(img)) || [],
+    user_id: "",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
 
-    downloadAsExcel(data, `property-${property.id}`);
+  const handleDelete = async () => {
+    try {
+      onDelete(property);
+    } catch (error) {
+      console.error('Error in handleDelete:', error);
+      if (error instanceof Error) {
+        toast.error(error.message || (isRTL ? 'حدث خطأ أثناء حذف المشروع' : 'Error deleting project'));
+      } else {
+        toast.error(isRTL ? 'حدث خطأ أثناء حذف المشروع' : 'Error deleting project');
+      }
+    }
+  };
+
+  const handleExport = () => {
+    const element = document.createElement("a");
+    const file = new Blob(
+      [JSON.stringify(property, null, 2)], 
+      { type: 'text/plain' }
+    );
+    element.href = URL.createObjectURL(file);
+    element.download = `${property.title}.json`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
   };
 
   return (
-    <Card
-      className={cn("relative group overflow-hidden", className)}
-      onClick={onClick}
-    >
-      {property.images && property.images[0] && (
-        <div className="relative h-48 overflow-hidden">
-          <img
-            src={property.images[0]}
-            alt={property.title}
-            className="w-full h-full object-cover transition-transform group-hover:scale-105"
-          />
-        </div>
-      )}
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">{property.title}</h3>
-          <div className={cn("space-x-2", isRTL && "space-x-reverse")}>
-            {onEdit && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(property);
-                }}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )}
-            {onDelete && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(property);
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
+    <>
+      <Card className={cn(
+        "transition-all duration-300 hover:shadow-lg",
+        isRTL ? "text-right" : "text-left"
+      )}>
+        <CardHeader>
+          <CardTitle className={cn(
+            "text-lg font-semibold",
+            isRTL ? "font-cairo" : ""
+          )}>
+            {property.title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">{t("projects.form.location")}</p>
+              <p className="text-sm">{property.location || "-"}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">{t("projects.form.operatingCompany")}</p>
+              <p className="text-sm">{property.operatingCompany || "-"}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">{t("projects.form.price")}</p>
+              <p className="text-sm">{property.pricePerMeterFrom} - {property.pricePerMeterTo}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">{t("projects.form.deliveryDate")}</p>
+              <p className="text-sm">{property.deliveryDate || "-"}</p>
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">
-              {t('properties.form.type')}
-            </span>
-            <span>{property.type || t('properties.form.notSpecified')}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">
-              {t('properties.form.price')}
-            </span>
-            <span>{property.price ? `$${property.price.toLocaleString()}` : t('properties.form.notSpecified')}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">
-              {t('properties.form.area')}
-            </span>
-            <span>{property.area ? `${property.area} m²` : t('properties.form.notSpecified')}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">
-              {t('properties.form.location')}
-            </span>
-            <span>{property.location || t('properties.form.notSpecified')}</span>
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter className="justify-end gap-2">
-        <ShareButton property={property} />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDownload();
-          }}
-        >
-          <Download className="h-4 w-4" />
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardContent>
+        <CardFooter className={cn(
+          "flex gap-2 justify-center border-t pt-4"
+        )}>
+          <PropertyViewDialog property={property} />
+          <PropertyEditSheet property={property} onSubmit={onEdit} />
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setIsShareOpen(true)}
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={handleExport}
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={handleDelete}
+            className="text-red-500 hover:text-red-700 hover:bg-red-100"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </CardFooter>
+      </Card>
+
+      <ProjectShareDialog
+        project={projectData}
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        isRTL={isRTL}
+      />
+    </>
   );
-};
+}
