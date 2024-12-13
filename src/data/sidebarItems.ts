@@ -9,7 +9,6 @@ import {
   Bot,
   Building2,
   MessageCircle,
-  ChartBar,
   BookOpen
 } from "lucide-react";
 import { staticClientStatuses } from "./clientStatuses";
@@ -51,7 +50,6 @@ export const getSidebarItems = async () => {
     },
     { icon: Home, label: "nav.properties", path: "/properties" },
     { icon: Building2, label: "nav.companies", path: "/companies" },
-    { icon: ChartBar, label: "nav.analytics", path: "/analytics" },
     { icon: BookOpen, label: "nav.guides", path: "/guides" },
     { icon: Users, label: "nav.users", path: "/users" },
     { icon: ClipboardList, label: "nav.tasks", path: "/tasks" },
