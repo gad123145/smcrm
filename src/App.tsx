@@ -1,4 +1,3 @@
-import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./i18n/config";
@@ -10,10 +9,12 @@ import { toast } from "sonner";
 import { initializeRealtimeSync } from "@/lib/realtime-sync";
 import { initializeClientsSync } from "@/lib/clients-sync";
 import { useClientStore } from "@/stores/clientStore";
+import { useDataStore } from "@/stores/dataStore";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const fetchInitialData = useDataStore(state => state.fetchInitialData);
   
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
@@ -42,18 +43,8 @@ function App() {
           const realtimeChannel = initializeRealtimeSync();
           const clientsChannel = initializeClientsSync();
 
-          // جلب بيانات العملاء الأولية
-          const { data: clients, error } = await supabase
-            .from('clients')
-            .select(`
-              *,
-              assigned_to_profile:profiles!assigned_to(full_name),
-              created_by_profile:profiles!created_by(full_name)
-            `)
-            .order('created_at', { ascending: false });
-
-          if (error) throw error;
-          useClientStore.getState().setClients(clients || []);
+          // جلب البيانات الأولية
+          await fetchInitialData();
 
           // تنظيف عند إلغاء التحميل
           return () => {
@@ -70,17 +61,21 @@ function App() {
     };
 
     checkAuth();
-  }, []);
+  }, [fetchInitialData]);
 
   // التحقق من حالة المصادقة
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN') {
         setIsAuthenticated(true);
+        await fetchInitialData();
         toast.success('تم تسجيل الدخول بنجاح');
       } else if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
         useClientStore.getState().setClients([]);
+        useDataStore.getState().setProjects([]);
+        useDataStore.getState().setProperties([]);
+        useDataStore.getState().setCompanies([]);
         queryClient.clear();
         toast.info('تم تسجيل الخروج');
       }
@@ -89,12 +84,15 @@ function App() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [queryClient]);
+  }, [queryClient, fetchInitialData]);
 
   const handleAuthError = () => {
     supabase.auth.signOut();
     queryClient.clear();
     useClientStore.getState().setClients([]);
+    useDataStore.getState().setProjects([]);
+    useDataStore.getState().setProperties([]);
+    useDataStore.getState().setCompanies([]);
     setIsAuthenticated(false);
     toast.error('انتهت صلاحية الجلسة. الرجاء تسجيل الدخول مرة أخرى.');
   };
